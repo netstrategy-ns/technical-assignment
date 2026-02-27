@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HoldController;
+use App\Http\Controllers\CheckoutController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -19,5 +20,9 @@ Route::get('/events/{event}', [EventController::class, 'show'])->name('events.sh
 Route::post('/holds', [HoldController::class, 'store'])
     ->middleware('auth')
     ->name('holds.store');
+Route::post('/checkout', [CheckoutController::class, 'store'])
+    ->middleware('auth')
+    ->name('checkout.store');
+
 
 require __DIR__ . '/settings.php';
