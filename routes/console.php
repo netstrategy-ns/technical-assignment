@@ -12,4 +12,12 @@ app()->booted(function () {
     app(Schedule::class)
         ->command('holds:expire')
         ->everyMinute();
+
+    app(Schedule::class)
+        ->command('queue:process-events')
+        ->everyMinute();
+
+    app(Schedule::class)
+        ->command('queue:expire-entries')
+        ->everyMinute();
 });

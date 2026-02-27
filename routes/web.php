@@ -5,6 +5,9 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HoldController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\EventQueueController;
+use App\Http\Controllers\Account\OrderController as AccountOrderController;
+use App\Http\Controllers\Account\TicketController as AccountTicketController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -24,5 +27,10 @@ Route::post('/checkout', [CheckoutController::class, 'store'])
     ->middleware('auth')
     ->name('checkout.store');
 
+Route::middleware('auth')->prefix('account')->group(function () {
+    Route::get('/orders', [AccountOrderController::class, 'index'])->name('account.orders.index');
+    Route::get('/orders/{order}', [AccountOrderController::class, 'show'])->name('account.orders.show');
+    Route::get('/tickets', [AccountTicketController::class, 'index'])->name('account.tickets.index');
+});
 
 require __DIR__ . '/settings.php';
