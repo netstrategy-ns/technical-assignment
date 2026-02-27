@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import EventCard from '@/components/EventCard.vue';
+import FlashMessages from '@/components/FlashMessages.vue';
+import { Button } from '@/components/ui/button';
+import type { Event } from '@/types/models';
 import type { BreadcrumbItem } from '@/types';
-import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { dashboard } from '@/routes';
+
+defineProps<{
+    featuredEvents: Event[];
+    upcomingEvents: Event[];
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -17,30 +25,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div
-            class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
-        >
-            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-                >
-                    <PlaceholderPattern />
+        <div class="flex flex-col gap-6 p-4">
+            <FlashMessages />
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Featured Events</h1>
+                    <p class="text-muted-foreground">
+                        Discover the hottest upcoming events
+                    </p>
                 </div>
-                <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-                >
-                    <PlaceholderPattern />
-                </div>
-                <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-                >
-                    <PlaceholderPattern />
-                </div>
+                <Button as-child variant="outline">
+                    <Link href="/events">View All Events</Link>
+                </Button>
             </div>
+
             <div
-                class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
+                v-if="featuredEvents.length > 0"
+                class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
-                <PlaceholderPattern />
+                <EventCard
+                    v-for="event in featuredEvents"
+                    :key="event.id"
+                    :event="event"
+                />
+            </div>
+            <div v-else class="py-12 text-center text-muted-foreground">
+                <p>No featured events at the moment. Check back soon!</p>
+                <Button as-child variant="outline" class="mt-4">
+                    <Link href="/events">Browse All Events</Link>
+                </Button>
             </div>
         </div>
     </AppLayout>

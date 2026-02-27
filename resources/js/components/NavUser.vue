@@ -22,7 +22,7 @@ const { isMobile, state } = useSidebar();
 </script>
 
 <template>
-    <SidebarMenu>
+    <SidebarMenu v-if="user">
         <SidebarMenuItem>
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
@@ -50,6 +50,13 @@ const { isMobile, state } = useSidebar();
                     <UserMenuContent :user="user" />
                 </DropdownMenuContent>
             </DropdownMenu>
+        </SidebarMenuItem>
+    </SidebarMenu>
+    <SidebarMenu v-else>
+        <SidebarMenuItem>
+            <SidebarMenuButton size="lg" as-child>
+                <a href="/login" class="font-medium">Log in</a>
+            </SidebarMenuButton>
         </SidebarMenuItem>
     </SidebarMenu>
 </template>

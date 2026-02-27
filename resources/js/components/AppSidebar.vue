@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
-import NavFooter from '@/components/NavFooter.vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { Calendar, LayoutGrid, ShoppingBag } from 'lucide-vue-next';
+import { computed } from 'vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -17,26 +17,43 @@ import type { NavItem } from '@/types';
 import AppLogo from './AppLogo.vue';
 import { dashboard } from '@/routes';
 
-const mainNavItems: NavItem[] = [
+const page = usePage();
+const isAuthenticated = computed(() => !!page.props.auth.user);
+
+// Public nav items — visible to everyone
+const publicNavItems: NavItem[] = [
+    {
+        title: 'Events',
+        href: '/events',
+        icon: Calendar,
+    },
+];
+
+// Auth nav items — only visible when logged in
+const authNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Events',
+        href: '/events',
+        icon: Calendar,
+    },
+    {
+        title: 'My Orders',
+        href: '/orders',
+        icon: ShoppingBag,
+    },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const mainNavItems = computed<NavItem[]>(() => {
+    if (isAuthenticated.value) {
+        return authNavItems;
+    }
+    return publicNavItems;
+});
 </script>
 
 <template>
@@ -45,7 +62,7 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+                        <Link href="/">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
@@ -58,7 +75,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>
