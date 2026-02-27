@@ -56,4 +56,16 @@ class EventQueueRepository
                 'updated_at' => $now,
             ]);
     }
+
+    public function markCompleted(int $eventId, int $userId): int
+    {
+        return EventQueueEntry::query()
+            ->where('event_id', $eventId)
+            ->where('user_id', $userId)
+            ->where('status', 'allowed')
+            ->update([
+                'status' => 'completed',
+                'updated_at' => Carbon::now(),
+            ]);
+    }
 }

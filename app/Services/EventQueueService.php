@@ -76,6 +76,15 @@ class EventQueueService
         return $this->queues->expireAllowed(Carbon::now());
     }
 
+    public function markCompleted(Event $event, int $userId): void
+    {
+        if (!$event->queue_enabled) {
+            return;
+        }
+
+        $this->queues->markCompleted($event->id, $userId);
+    }
+
     public function assertAllowed(Event $event, int $userId): void
     {
         if (!$event->queue_enabled) {

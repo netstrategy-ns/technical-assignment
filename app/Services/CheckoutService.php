@@ -106,6 +106,10 @@ class CheckoutService
                     $hold->save();
                 });
 
+                if ($event) {
+                    $this->queue->markCompleted($event, $userId);
+                }
+
                 return $order;
             });
         } catch (QueryException $exception) {
