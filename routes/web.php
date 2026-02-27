@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\HoldController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -15,5 +16,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/featured', [EventController::class, 'featured'])->name('events.featured');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::post('/holds', [HoldController::class, 'store'])
+    ->middleware('auth')
+    ->name('holds.store');
 
 require __DIR__ . '/settings.php';
