@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\EventController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -11,4 +12,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 });
 
-require __DIR__.'/settings.php';
+Route::get('/events', [EventController::class, 'index'])->name('events.index');
+Route::get('/events/featured', [EventController::class, 'featured'])->name('events.featured');
+Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+
+require __DIR__ . '/settings.php';
