@@ -27,6 +27,13 @@ Route::post('/checkout', [CheckoutController::class, 'store'])
     ->middleware('auth')
     ->name('checkout.store');
 
+Route::post('/queue/enter', [EventQueueController::class, 'enter'])
+    ->middleware('auth')
+    ->name('queue.enter');
+Route::get('/queue/status', [EventQueueController::class, 'status'])
+    ->middleware('auth')
+    ->name('queue.status');
+
 Route::middleware('auth')->prefix('account')->group(function () {
     Route::get('/orders', [AccountOrderController::class, 'index'])->name('account.orders.index');
     Route::get('/orders/{order}', [AccountOrderController::class, 'show'])->name('account.orders.show');
