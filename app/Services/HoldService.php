@@ -16,8 +16,7 @@ class HoldService
     public function __construct(
         private readonly HoldRepository $holds,
         private readonly EventQueueService $queue,
-    ) {
-    }
+    ) {}
 
     public function createHold(int $userId, int $eventId, int $ticketTypeId, int $quantity): Hold
     {
@@ -73,5 +72,10 @@ class HoldService
                 'status' => 'active',
             ]);
         });
+    }
+
+    public function listActiveForUser(int $userId)
+    {
+        return $this->holds->activeForUser($userId, Carbon::now());
     }
 }

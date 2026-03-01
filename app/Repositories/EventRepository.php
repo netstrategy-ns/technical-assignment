@@ -32,7 +32,7 @@ class EventRepository
         $now = Carbon::now();
 
         $event->load([
-            'ticketTypes' => function (Builder $query) use ($now): void {
+            'ticketTypes' => function ($query) use ($now): void {
                 $query->withCount([
                     'tickets as sold_count' => function (Builder $ticketQuery): void {
                         $ticketQuery->where('status', 'valid');

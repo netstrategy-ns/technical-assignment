@@ -41,9 +41,6 @@ class HoldRepository
         return Hold::query()->create($data);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Hold>
-     */
     public function activeForUserEvent(int $userId, int $eventId, Carbon $now)
     {
         return Hold::query()
@@ -52,6 +49,17 @@ class HoldRepository
             ->where('status', 'active')
             ->where('expires_at', '>', $now)
             ->lockForUpdate()
+            ->get();
+    }
+
+    public function activeForUser(int $userId, Carbon $now)
+    {
+        return Hold::query()
+            ->where('user_id', $userId)
+            ->where('status', 'active')
+            ->where('expires_at', '>', $now)
+            ->with(['event', 'ticketType'])
+            ->orderBy('expires_at')
             ->get();
     }
 }

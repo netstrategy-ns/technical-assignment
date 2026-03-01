@@ -27,6 +27,13 @@ class EventQueueService
 
             $existing = $this->queues->findForUser($event->id, $userId);
             if ($existing) {
+                if (in_array($existing->status, ['completed', 'expired'], true)) {
+                    $existing->status = 'waiting';
+                    $existing->entered_at = $now;
+                    $existing->allowed_until = null;
+                    $existing->save();
+                }
+
                 return $existing;
             }
 
@@ -45,7 +52,7 @@ class EventQueueService
             return 0;
         }
 
-        $limit = $event->queue_max_concurrent ?? 0;
+        $limit = $event->queue_max_concurrent ?? 50;
         if ($limit <= 0) {
             return 0;
         }
