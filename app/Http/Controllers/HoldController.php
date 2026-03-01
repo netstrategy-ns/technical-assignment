@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Hold\StoreHoldRequest;
 use App\Services\HoldService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use RuntimeException;
 
 class HoldController extends Controller
@@ -30,5 +31,12 @@ class HoldController extends Controller
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $holds = $this->holds->listActiveForUser($request->user()->id);
+
+        return response()->json($holds);
     }
 }

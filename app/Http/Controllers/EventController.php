@@ -6,6 +6,8 @@ use App\Http\Requests\Event\IndexEventRequest;
 use App\Models\Event;
 use App\Services\EventService;
 use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class EventController extends Controller
 {
@@ -29,10 +31,12 @@ class EventController extends Controller
         return response()->json($this->events->listFeatured());
     }
 
-    public function show(Event $event): JsonResponse
+    public function show(Event $event): Response
     {
         $this->authorize('view', $event);
         $return = $this->events->loadAvailability($event);
-        return response()->json($return);
+        return Inertia::render('EventShow', [
+            'event' => $return,
+        ]);
     }
 }

@@ -13,6 +13,14 @@ Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+Route::inertia('/cart', 'Cart')
+    ->middleware('auth')
+    ->name('cart');
+
+Route::inertia('/account', 'Account')
+    ->middleware('auth')
+    ->name('account');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 });
@@ -23,10 +31,12 @@ Route::get('/events/{event}', [EventController::class, 'show'])->name('events.sh
 Route::post('/holds', [HoldController::class, 'store'])
     ->middleware('auth')
     ->name('holds.store');
+Route::get('/holds', [HoldController::class, 'index'])
+    ->middleware('auth')
+    ->name('holds.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])
     ->middleware('auth')
     ->name('checkout.store');
-
 Route::post('/queue/enter', [EventQueueController::class, 'enter'])
     ->middleware('auth')
     ->name('queue.enter');
