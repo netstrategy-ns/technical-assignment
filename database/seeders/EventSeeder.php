@@ -13,7 +13,7 @@ class EventSeeder extends Seeder
      */
     public function run(): void
     {
-        Event::factory()
+        $events = Event::factory()
             ->count(15)
             ->create()
             ->each(function (Event $event): void {
@@ -21,5 +21,18 @@ class EventSeeder extends Seeder
                     ->count(rand(2, 4))
                     ->create(['event_id' => $event->id]);
             });
+
+        $events->random(8)->each(function (Event $event): void {
+            $event->update([
+                'sales_start_at' => now()->subDays(rand(1, 20)),
+            ]);
+        });
+
+        $events->random(4)->each(function (Event $event): void {
+            $event->update([
+                'queue_enabled' => true,
+                'queue_max_concurrent' => rand(50, 150),
+            ]);
+        });
     }
 }

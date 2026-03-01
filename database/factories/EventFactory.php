@@ -20,8 +20,8 @@ class EventFactory extends Factory
     public function definition(): array
     {
         $startsAt = $this->faker->dateTimeBetween('+5 days', '+6 months');
-        $endsAt = (clone $startsAt)->modify('+'.rand(2, 5).' hours');
-        $salesStartAt = (clone $startsAt)->modify('-'.rand(1, 30).' days');
+        $endsAt = (clone $startsAt)->modify('+' . rand(2, 5) . ' hours');
+        $salesStartAt = (clone $startsAt)->modify('-' . rand(1, 30) . ' days');
         $category = $this->faker->randomElement([
             'Concert',
             'Sports',
@@ -46,9 +46,9 @@ class EventFactory extends Factory
             'category' => $category,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
-            'venue' => $this->faker->company.' Arena',
+            'venue' => $this->faker->company . ' Arena',
             'city' => $city,
-            'image_url' => $this->faker->imageUrl(1200, 800, 'event', true),
+            'image_url' => null,
             'is_featured' => $this->faker->boolean(30),
             'sales_start_at' => $salesStartAt,
             'queue_enabled' => $this->faker->boolean(25),
