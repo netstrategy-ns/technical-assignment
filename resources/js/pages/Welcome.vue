@@ -134,6 +134,14 @@ onMounted(loadData);
             <Link href="/account" class="rounded-full border border-white/20 px-4 py-2 hover:border-white/50">
               Account
             </Link>
+            <Link
+              href="/logout"
+              method="post"
+              as="button"
+              class="rounded-full border border-white/20 px-4 py-2 hover:border-white/50"
+            >
+              Esci
+            </Link>
           </template>
           <template v-else>
             <Link href="/login" class="rounded-full border border-white/20 px-4 py-2 hover:border-white/50">
