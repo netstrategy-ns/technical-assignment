@@ -17,8 +17,6 @@ class EventController extends Controller
 
     public function index(IndexEventRequest $request): JsonResponse
     {
-        $this->authorize('viewAny', Event::class);
-
         $filters = $request->validated();
         $return = $this->events->listEvents($filters);
         return response()->json($return);
@@ -26,14 +24,11 @@ class EventController extends Controller
 
     public function featured(): JsonResponse
     {
-        $this->authorize('viewAny', Event::class);
-
         return response()->json($this->events->listFeatured());
     }
 
     public function show(Event $event): Response
     {
-        $this->authorize('view', $event);
         $return = $this->events->loadAvailability($event);
         return Inertia::render('EventShow', [
             'event' => $return,

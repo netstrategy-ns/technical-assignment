@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Queue\EnterQueueRequest;
 use App\Http\Requests\Queue\StatusQueueRequest;
 use App\Models\Event;
+use App\Models\EventQueueEntry;
 use App\Services\EventQueueService;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;

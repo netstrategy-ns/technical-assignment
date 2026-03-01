@@ -12,8 +12,7 @@ class OrderController extends Controller
 {
     public function __construct(
         private readonly OrderService $orders,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -22,11 +21,9 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    public function show(Request $request, Order $order): JsonResponse
+    public function show(Order $order): JsonResponse
     {
-        if ($order->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('view', $order);
 
         $order = $this->orders->loadDetails($order);
 
