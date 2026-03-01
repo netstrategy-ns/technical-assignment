@@ -58,11 +58,11 @@ const checkout = async (eventId: number) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken(),
+      'X-XSRF-TOKEN': csrfToken(),
       'X-Requested-With': 'XMLHttpRequest',
       'Idempotency-Key': getIdempotencyKey(eventId),
     },
-    credentials: 'same-origin',
+    credentials: 'include',
     body: JSON.stringify({ event_id: eventId }),
   });
 

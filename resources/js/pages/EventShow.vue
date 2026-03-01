@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed, onUnmounted, ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { csrfToken } from '@/lib/csrf';
 import { formatDate } from '@/lib/formatters';
 
@@ -32,10 +32,6 @@ const page = usePage();
 const event = page.props.event as EventDetail;
 const queueStatus = ref<string | null>(null);
 const queueMessage = ref<string | null>(null);
-const hasAvailableTickets = computed(() => {
-  return event.ticket_types.some((ticket) => ticket.available_quantity > 0);
-});
-
 const quantities = ref<Record<number, number>>({});
 const message = ref<string | null>(null);
 
@@ -50,7 +46,7 @@ const loadQueueStatus = async () => {
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
       },
-      credentials: 'same-origin',
+      credentials: 'include',
     });
 
     if (response.ok) {
@@ -88,10 +84,10 @@ const enterQueue = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrfToken(),
+        'X-XSRF-TOKEN': csrfToken(),
         'X-Requested-With': 'XMLHttpRequest',
       },
-      credentials: 'same-origin',
+      credentials: 'include',
       body: JSON.stringify({ event_id: event.id }),
     });
 
@@ -118,10 +114,10 @@ const reserve = async (ticketTypeId: number) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken(),
+      'X-XSRF-TOKEN': csrfToken(),
       'X-Requested-With': 'XMLHttpRequest',
     },
-    credentials: 'same-origin',
+    credentials: 'include',
     body: JSON.stringify({
       event_id: event.id,
       ticket_type_id: ticketTypeId,
@@ -202,13 +198,15 @@ onUnmounted(() => {
               Per acquistare devi entrare nella coda e attendere l'accesso.
             </p>
             <button
+              v-if="queueStatus !== 'waiting'"
               class="mt-4 w-full cursor-pointer rounded-full bg-lime-400 px-4 py-2 text-sm font-semibold text-slate-900"
               @click="enterQueue"
             >
               Entra in coda
             </button>
             <button
-              class="mt-3 w-full cursor-pointer rounded-full border border-white/20 px-4 py-2 text-sm"
+              v-else
+              class="mt-4 w-full cursor-pointer rounded-full border border-white/20 px-4 py-2 text-sm"
               @click="loadQueueStatus"
             >
               Aggiorna stato
@@ -216,7 +214,7 @@ onUnmounted(() => {
             <p v-if="queueMessage" class="mt-4 text-sm text-slate-200">
               {{ queueMessage }}
             </p>
-            <p v-if="queueStatus" class="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p v-if="queueStatus && queueStatus !== 'completed'" class="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">
               Stato: {{ queueStatus }}
             </p>
           </template>
