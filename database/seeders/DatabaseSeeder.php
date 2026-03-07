@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,9 +16,27 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+
+        // Per creare utente di test utilizzare il comando: php artisan user:create
+        // Per creare utente admin utilizzare il comando: php artisan admin:create
+
+        /**
+         * ------------------------------------------------------------
+         *  ATTENZIONE ORDINE IMPORTANTE PER FOREIGN KEYS
+         * ------------------------------------------------------------
+         * 1. EventCategorySeeder
+         * 2. VenueTypeSeeder
+         * 3. EventSeeder
+         * 4. TicketTypeSeeder
+         * 5. TicketSeeder
+         * ------------------------------------------------------------
+         */ 
+        $this->call([
+            EventCategorySeeder::class,
+            VenueTypeSeeder::class,
+            EventSeeder::class,
+            TicketTypeSeeder::class,
+            TicketSeeder::class,
         ]);
     }
 }
