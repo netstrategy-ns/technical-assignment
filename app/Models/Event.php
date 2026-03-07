@@ -94,6 +94,12 @@ class Event extends Model
         return $this->hasMany(TicketType::class);
     }
 
+    // Relazione quote biglietti
+    public function ticketTypeQuotas(): HasManyThrough
+    {
+        return $this->hasManyThrough(TicketTypeQuota::class, TicketType::class, 'event_id', 'ticket_type_id', 'id', 'id');
+    }
+
     // Relazione biglietti venduti passando per ticket types
     public function orderItems(): HasManyThrough
     {

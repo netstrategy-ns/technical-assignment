@@ -9,8 +9,9 @@
 
 use App\Models\Event;
 use App\Models\EventCategory;
-use App\Models\Ticket;
 use App\Models\TicketType;
+use App\Models\TicketTypeQuota;
+use App\Models\Ticket;
 use App\Models\VenueType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -110,5 +111,100 @@ describe('Test conformità dati Eventi', function () {
         expect($ticket)->not->toBeNull();
         expect($ticket->ticketType)->not->toBeNull();
         expect($ticket->ticket_type_id)->toBe($ticket->ticketType->id);
+    });
+});
+
+describe('Quote per tipologia (TicketTypeQuota) e Observer', function () {
+    test('dopo il seed la somma delle quote per evento non supera available_tickets', function () {
+        $eventi = Event::where('available_tickets', '>', 0)->with('ticketTypes')->get();
+        expect($eventi->count())->toBeGreaterThan(0);
+
+        foreach ($eventi as $evento) {
+            $ticketTypes = $evento->ticketTypes;
+            if ($ticketTypes->isEmpty()) {
+                continue;
+            }
+            $sommaQuote = TicketTypeQuota::whereIn('ticket_type_id', $ticketTypes->pluck('id'))->sum('quantity');
+            expect($sommaQuote)->toBeLessThanOrEqual((int) $evento->available_tickets);
+        }
+    });
+
+    test('ogni ticket type di eventi con available_tickets ha una quota dopo il seed', function () {
+        $eventi = Event::where('available_tickets', '>', 0)->with('ticketTypes')->get();
+        foreach ($eventi as $evento) {
+            foreach ($evento->ticketTypes as $ticketType) {
+                $quota = TicketTypeQuota::where('ticket_type_id', $ticketType->id)->first();
+                expect($quota)->not->toBeNull();
+                expect($quota->quantity)->toBeGreaterThan(0);
+            }
+        }
+    });
+
+    test('creare una quota che supera available_tickets solleva InvalidArgumentException', function () {
+        $evento = Event::where('available_tickets', '>', 0)->with('ticketTypes')->first();
+        expect($evento)->not->toBeNull();
+        $giaAssegnato = TicketTypeQuota::whereIn(
+            'ticket_type_id',
+            $evento->ticketTypes->pluck('id')
+        )->sum('quantity');
+        $totale = (int) $evento->available_tickets;
+        expect($giaAssegnato)->toBeLessThanOrEqual($totale);
+
+        $nuovoTipo = TicketType::factory()->create([
+            'event_id' => $evento->id,
+            'venue_type_id' => $evento->venue_type_id,
+            'name' => 'Extra',
+        ]);
+        $quantitaEccedente = $totale - $giaAssegnato + 1;
+
+        TicketTypeQuota::create([
+            'ticket_type_id' => $nuovoTipo->id,
+            'quantity' => $quantitaEccedente,
+        ]);
+    })->throws(\InvalidArgumentException::class);
+
+    test('aggiornare una quota oltre available_tickets solleva InvalidArgumentException', function () {
+        $evento = Event::where('available_tickets', '>', 0)->with('ticketTypes')->first();
+        expect($evento)->not->toBeNull();
+        $quota = TicketTypeQuota::whereIn(
+            'ticket_type_id',
+            $evento->ticketTypes->pluck('id')
+        )->first();
+        expect($quota)->not->toBeNull();
+
+        $totale = (int) $evento->available_tickets;
+        $altreQuote = TicketTypeQuota::whereIn('ticket_type_id', $evento->ticketTypes->pluck('id'))
+            ->where('id', '!=', $quota->id)
+            ->sum('quantity');
+        $nuovaQty = $totale - $altreQuote + 1;
+
+        $quota->update(['quantity' => $nuovaQty]);
+    })->throws(\InvalidArgumentException::class);
+
+    test('creare e aggiornare quote entro available_tickets non solleva eccezione', function () {
+        $startsAt = now()->addWeeks(2);
+        $evento = Event::factory()->create([
+            'title' => 'Evento Test Quote',
+            'description' => 'Descrizione test',
+            'location' => 'Roma',
+            'starts_at' => $startsAt,
+            'ends_at' => $startsAt->copy()->addHours(2),
+            'sale_starts_at' => $startsAt->copy()->subDays(7),
+            'available_tickets' => 100,
+            'event_category_id' => EventCategory::first()->id,
+            'venue_type_id' => VenueType::first()->id,
+        ]);
+        $tt1 = TicketType::factory()->create(['event_id' => $evento->id, 'venue_type_id' => $evento->venue_type_id, 'name' => 'Tipo A']);
+        $tt2 = TicketType::factory()->create(['event_id' => $evento->id, 'venue_type_id' => $evento->venue_type_id, 'name' => 'Tipo B']);
+
+        TicketTypeQuota::create(['ticket_type_id' => $tt1->id, 'quantity' => 50]);
+        TicketTypeQuota::create(['ticket_type_id' => $tt2->id, 'quantity' => 50]);
+
+        $q1 = TicketTypeQuota::where('ticket_type_id', $tt1->id)->first();
+        $q1->update(['quantity' => 49]);
+        TicketTypeQuota::where('ticket_type_id', $tt2->id)->first()->update(['quantity' => 51]);
+
+        $somma = (int) TicketTypeQuota::whereIn('ticket_type_id', [$tt1->id, $tt2->id])->sum('quantity');
+        expect($somma)->toBe(100);
     });
 });

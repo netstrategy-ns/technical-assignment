@@ -28,14 +28,16 @@ class DatabaseSeeder extends Seeder
          * 2. VenueTypeSeeder
          * 3. EventSeeder
          * 4. TicketTypeSeeder
-         * 5. TicketSeeder
+         * 5. TicketTypeQuotaSeeder (somma quote per evento ≤ event.available_tickets)
+         * 6. TicketSeeder
          * ------------------------------------------------------------
-         */ 
+         */
         $this->call([
             EventCategorySeeder::class,
             VenueTypeSeeder::class,
             EventSeeder::class,
             TicketTypeSeeder::class,
+            TicketTypeQuotaSeeder::class,
             TicketSeeder::class,
         ]);
     }

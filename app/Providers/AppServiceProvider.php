@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\TicketTypeQuota;
 use App\Models\User;
+use App\Observers\TicketTypeQuotaObserver;
 use App\Observers\UserObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        TicketTypeQuota::observe(TicketTypeQuotaObserver::class);
         User::observe(UserObserver::class);
 
         Gate::define('admin', fn (User $user): bool => $user->isAdmin());
