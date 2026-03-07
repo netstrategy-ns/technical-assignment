@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,6 +27,7 @@ class Event extends Model
         'location',
         'image_url',
         'sale_starts_at',
+        'available_tickets',
     ];
 
     protected $casts = [
@@ -36,7 +38,7 @@ class Event extends Model
         'is_active' => 'boolean',
     ];
 
-     /**
+    /**
      * Risolve l'evento dallo slug nell'URL.
      */
     public function getRouteKeyName(): string
@@ -105,4 +107,78 @@ class Event extends Model
     {
         return $this->hasManyThrough(OrderItem::class, TicketType::class);
     }
+
+    /**
+     * ------------------------------------------------------------
+     * SCOPES
+     * ------------------------------------------------------------
+     */
+
+    // Cerca eventi per titolo
+    public function scopeSearchByTitle(Builder $query, string $title): Builder
+    {
+        return $query->where('title', 'like', '%' . $title . '%');
+    }
+
+    // Filtra eventi per categoria
+    public function scopeFilterByCategory(Builder $query, string $categorySlug): Builder
+    {
+        return $query->whereHas('category', fn($q) => $q->where('slug', $categorySlug));
+    }
+
+    // Filtra eventi per luogo
+    public function scopeFilterByLocation(Builder $query, string $location): Builder
+    {
+        return $query->where('location', 'like', '%' . $location . '%');
+    }
+
+    // Filtra eventi featured
+    public function scopeFilterByFeatured(Builder $query): Builder
+    {
+        return $query->where('is_featured', true);
+    }
+
+    // Filtra eventi attivi
+    public function scopeFilterByActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    // Filtra eventi per data di inizio
+    public function scopeFilterByStartDate(Builder $query, string $startDate): Builder
+    {
+        return $query->where('starts_at', '>=', $startDate);
+    }
+
+    // Filtra eventi tra due date
+    public function scopeFilterByDateRange(Builder $query, string $startDate, string $endDate): Builder
+    {
+        return $query->whereBetween('starts_at', [$startDate, $endDate]);
+    }
+
+    // Ordina eventi per data di inizio
+    public function scopeOrderByStartDate(Builder $query): Builder
+    {
+        return $query->orderBy('starts_at');
+    }
+
+    /**
+     * Applica l'ordinamento scelto dalla UI (catalogo eventi).
+     * Valori: date_asc, date_desc, featured_first.
+     */
+    public function scopeApplySort(Builder $query, string $sort = 'date_asc'): Builder
+    {
+        return match ($sort) {
+            'date_desc' => $query->orderBy('starts_at', 'desc'),
+            'featured_first' => $query->orderByRaw('CASE WHEN is_featured = 1 THEN 0 ELSE 1 END')->orderBy('starts_at'),
+            default => $query->orderBy('starts_at', 'asc'),
+        };
+    }
+
+    // Ordina eventi per disponibilità biglietti
+    public function scopeOrderByAvailableTickets(Builder $query): Builder
+    {
+        return $query->orderBy('available_tickets', 'desc');
+    }
+
 }

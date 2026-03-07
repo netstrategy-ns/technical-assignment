@@ -55,4 +55,19 @@ class TicketType extends Model
     {
         return $this->hasManyThrough(OrderItem::class, Ticket::class);
     }
+
+
+    /**
+     * ------------------------------------------------------------
+     * HELPER METHODS
+     * ------------------------------------------------------------
+     */
+    public function getAvailableQuantity(): int
+    {
+        $quota = (int) ($this->quota?->quantity ?? 0);
+        $sold = (int) $this->orderItems()->sum('quantity');
+
+        return max(0, $quota - $sold);
+    }
+
 }
