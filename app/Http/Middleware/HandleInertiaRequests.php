@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Middleware;
+use Laravel\Fortify\Features;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -52,13 +53,14 @@ class HandleInertiaRequests extends Middleware
                 'adminDashboard' => Route::has('admin.dashboard') ? route('admin.dashboard') : '/admin/dashboard',
                 'adminStatistics' => Route::has('admin.statistics') ? route('admin.statistics') : '/admin/statistics',
                 'adminUsers' => Route::has('admin.users') ? route('admin.users') : '/admin/users',
-                'adminEventsBase' => Route::has('admin.events') ? route('admin.events') : '/admin/events',
+                'adminEventsBase' => Route::has('admin.events.index') ? route('admin.events.index') : '/admin/events',
             ];
         }
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'canRegister' => Features::enabled(Features::registration()),
             'auth' => [
                 'user' => $request->user(),
                 'canAccessAdmin' => $canAccessAdmin,
