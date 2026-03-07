@@ -26,6 +26,7 @@ class User extends Authenticatable
 
     /**
      * The attributes that should be hidden for serialization.
+     * is_admin non va esposto al frontend; usare canAccessAdmin() lato backend.
      *
      * @var list<string>
      */
@@ -34,6 +35,7 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
+        'is_admin',
     ];
 
     /**
@@ -41,12 +43,16 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'two_factor_confirmed_at' => 'datetime',
+        'is_admin' => 'boolean',
+    ];
+
+
+    public function isAdmin(): bool
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
-        ];
+        return $this->is_admin === true;
     }
 }
