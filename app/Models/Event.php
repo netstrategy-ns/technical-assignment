@@ -79,7 +79,7 @@ class Event extends Model
     /** @return BelongsTo<EventCategory, $this> */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(EventCategory::class);
+        return $this->belongsTo(EventCategory::class, 'event_category_id');
     }
 
     // Relazione per tipo di luogo dove si svolge l'evento
