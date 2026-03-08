@@ -9,9 +9,11 @@ const page = usePage();
 const user = computed(() => (page.props.auth as { user?: unknown })?.user);
 const canRegister = computed(() => (page.props.canRegister as boolean) ?? true);
 
-const { add, items } = useCart();
+const { add, getItemByTicketId, quantityForTicket } = useCart();
 const quantities = ref<Record<number, number>>({});
 const maxReachedMessages = ref<Record<number, boolean>>({});
+const actionErrors = ref<Record<number, string>>({});
+const loadingTickets = ref<Record<number, boolean>>({});
 
 defineProps<{
     event: {
@@ -28,6 +30,8 @@ defineProps<{
                 price: string;
                 quantity_total: number | null;
                 max_per_user: number | null;
+                available_quantity: number;
+                user_hold_quantity: number;
             }>;
         }>;
     };
@@ -35,14 +39,15 @@ defineProps<{
 }>();
 
 const maxQuantityForTicket = (
-    availableForType: number,
+    availableForTicket: number,
     maxPerUser: number | null,
+    currentHeldQuantity: number,
 ): number => {
-    if (availableForType <= 0) return 0;
+    if (availableForTicket <= 0) return 0;
     if (maxPerUser != null && maxPerUser > 0) {
-        return Math.min(availableForType, maxPerUser);
+        return Math.max(0, Math.min(availableForTicket, maxPerUser - currentHeldQuantity));
     }
-    return availableForType;
+    return availableForTicket;
 };
 
 const hideMaxReachedMessage = (ticketId: number) => {
@@ -57,35 +62,54 @@ const getSelectedQuantity = (ticketId: number) => {
     return quantities.value[ticketId] ?? 1;
 };
 
-const isAtSelectionMax = (
-    ticketId: number,
-    availableForType: number,
-    maxPerUser: number | null,
-): boolean => {
-    if (maxPerUser == null || maxPerUser <= 0) {
-        return false;
+const getHeldQuantity = (ticketId: number) => {
+    return quantityForTicket(ticketId);
+};
+
+const getExpiresAtLabel = (ticketId: number) => {
+    const expiresAt = getItemByTicketId(ticketId)?.expires_at;
+
+    if (!expiresAt) {
+        return null;
     }
 
-    return getSelectedQuantity(ticketId) >= maxQuantityForTicket(availableForType, maxPerUser);
+    return new Date(expiresAt).toLocaleTimeString('it-IT', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+};
+
+const isAtSelectionMax = (
+    ticketId: number,
+    availableForTicket: number,
+    maxPerUser: number | null,
+): boolean => {
+    return getSelectedQuantity(ticketId) >= maxQuantityForTicket(
+        availableForTicket,
+        maxPerUser,
+        getHeldQuantity(ticketId),
+    );
 };
 
 const decrementSelection = (ticketId: number) => {
     quantities.value[ticketId] = Math.max(1, getSelectedQuantity(ticketId) - 1);
     hideMaxReachedMessage(ticketId);
+    actionErrors.value[ticketId] = '';
 };
 
 const incrementSelection = (
     ticketId: number,
-    availableForType: number,
+    availableForTicket: number,
     maxPerUser: number | null,
 ): void => {
-    if (isAtSelectionMax(ticketId, availableForType, maxPerUser)) {
+    if (isAtSelectionMax(ticketId, availableForTicket, maxPerUser)) {
         showMaxReachedMessage(ticketId);
         return;
     }
 
     quantities.value[ticketId] = getSelectedQuantity(ticketId) + 1;
     hideMaxReachedMessage(ticketId);
+    actionErrors.value[ticketId] = '';
 };
 
 const isCartAtMax = (ticketId: number, maxPerUser: number | null): boolean => {
@@ -93,41 +117,54 @@ const isCartAtMax = (ticketId: number, maxPerUser: number | null): boolean => {
         return false;
     }
 
-    const existing = items.value.find((item) => item.ticketId === ticketId);
+    return getHeldQuantity(ticketId) >= maxPerUser;
+};
 
-    return existing != null && existing.quantity >= maxPerUser;
+const hasReachedUserLimit = (ticketId: number, maxPerUser: number | null): boolean => {
+    if (maxPerUser == null || maxPerUser <= 0) {
+        return false;
+    }
+
+    return getHeldQuantity(ticketId) >= maxPerUser;
 };
 
 const addToCart = (
-    eventId: number,
-    eventSlug: string,
-    eventTitle: string,
-    ticketTypeId: number,
-    ticketTypeName: string,
     ticketId: number,
-    price: string,
-    availableForType: number,
+    availableForTicket: number,
     maxPerUser: number | null,
 ): void => {
+    if (loadingTickets.value[ticketId]) {
+        return;
+    }
+
     if (isCartAtMax(ticketId, maxPerUser)) {
         showMaxReachedMessage(ticketId);
         return;
     }
 
-    const maxQty = maxQuantityForTicket(availableForType, maxPerUser);
+    const maxQty = maxQuantityForTicket(availableForTicket, maxPerUser, getHeldQuantity(ticketId));
     const qty = Math.min(maxQty, Math.max(1, getSelectedQuantity(ticketId)));
-    add({
-        eventId,
-        eventSlug,
-        eventTitle,
-        ticketTypeId,
-        ticketTypeName,
-        ticketId,
-        price,
-        maxPerUser,
-        quantity: qty,
+
+    if (qty <= 0) {
+        showMaxReachedMessage(ticketId);
+        return;
+    }
+
+    loadingTickets.value[ticketId] = true;
+    actionErrors.value[ticketId] = '';
+
+    add(ticketId, qty, {
+        onSuccess: () => {
+            quantities.value[ticketId] = 1;
+            hideMaxReachedMessage(ticketId);
+        },
+        onError: (errors) => {
+            actionErrors.value[ticketId] = errors.quantity ?? errors.ticket_id ?? 'Impossibile aggiungere il biglietto al carrello.';
+        },
+        onFinish: () => {
+            loadingTickets.value[ticketId] = false;
+        },
     });
-    hideMaxReachedMessage(ticketId);
 };
 </script>
 
@@ -154,11 +191,30 @@ const addToCart = (
                     <li
                         v-for="ticket in tt.tickets"
                         :key="ticket.id"
-                        class="flex flex-wrap items-center justify-between gap-2 text-sm"
+                        class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sidebar-border/50 p-3 text-sm"
                     >
-                        <span class="text-xl font-medium ">Prezzo: € {{ ticket.price }}</span>
-                        <span v-if="ticket.max_per_user">Max {{ ticket.max_per_user }} per utente</span>
-                        <template v-if="!saleNotStarted && tt.available_quantity > 0">
+                        <div class="w-full">
+                            <span class="text-xl font-medium">Prezzo: € {{ ticket.price }}</span>
+                            <div class="mt-1 flex w-full items-center justify-between text-xs">
+                                <span>
+                                Disponibili per questa offerta:
+                                <strong>{{ ticket.available_quantity }}</strong>
+                                </span>
+                                <span
+                                    v-if="ticket.max_per_user"
+                                    :class="hasReachedUserLimit(ticket.id, ticket.max_per_user)
+                                        ? 'font-medium text-destructive'
+                                        : 'text-muted-foreground'"
+                                >
+                                    Max {{ ticket.max_per_user }} per utente
+                                </span>
+                            </div>
+                            <p v-if="getHeldQuantity(ticket.id) > 0" class="mt-1 text-xs text-primary">
+                                Nel carrello: {{ getHeldQuantity(ticket.id) }}
+                                <template v-if="getExpiresAtLabel(ticket.id)"> scade alle {{ getExpiresAtLabel(ticket.id) }}</template>
+                            </p>
+                        </div>
+                        <template v-if="!saleNotStarted && ticket.available_quantity > 0">
                             <div v-if="user" class="w-full sm:w-auto sm:flex-1">
                                 <div class="flex items-center gap-2 sm:justify-end">
                                     <Button
@@ -176,18 +232,19 @@ const addToCart = (
                                         variant="outline"
                                         size="icon-sm"
                                         aria-label="Aumenta quantità"
-                                        :disabled="isAtSelectionMax(ticket.id, tt.available_quantity, ticket.max_per_user)"
-                                        @click="incrementSelection(ticket.id, tt.available_quantity, ticket.max_per_user)"
+                                        :disabled="isAtSelectionMax(ticket.id, ticket.available_quantity, ticket.max_per_user)"
+                                        @click="incrementSelection(ticket.id, ticket.available_quantity, ticket.max_per_user)"
                                     >
                                         <Plus class="size-4" />
                                     </Button>
                                     <Button
                                         size="sm"
                                         variant="secondary"
-                                        @click="addToCart(event.id, event.slug, event.title, tt.id, tt.name, ticket.id, ticket.price, tt.available_quantity, ticket.max_per_user)"
+                                        :disabled="isCartAtMax(ticket.id, ticket.max_per_user)"
+                                        @click="addToCart(ticket.id, ticket.available_quantity, ticket.max_per_user)"
                                     >
                                         <ShoppingCart class="size-4" />
-                                        Aggiungi al carrello
+                                        {{ loadingTickets[ticket.id] ? 'Aggiunta...' : 'Aggiungi al carrello' }}
                                     </Button>
                                 </div>
                                 <p
@@ -195,6 +252,12 @@ const addToCart = (
                                     class="mt-2 text-right text-xs text-amber-600 dark:text-amber-400"
                                 >
                                     Hai raggiunto il limite massimo per utente.
+                                </p>
+                                <p
+                                    v-if="actionErrors[ticket.id]"
+                                    class="mt-2 text-right text-xs text-destructive"
+                                >
+                                    {{ actionErrors[ticket.id] }}
                                 </p>
                             </div>
                             <span v-else class="flex items-center gap-2 text-sm text-muted-foreground">

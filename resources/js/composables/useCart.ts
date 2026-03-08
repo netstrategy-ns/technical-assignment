@@ -1,128 +1,121 @@
-import { computed, ref, watch } from 'vue';
-
-const CART_STORAGE_KEY = 'tickme_cart';
+import { router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 export interface CartItem {
-    eventId: number;
-    eventSlug: string;
-    eventTitle: string;
-    ticketTypeId: number;
-    ticketTypeName: string;
-    ticketId: number;
-    price: string;
-    maxPerUser: number | null;
+    id: number;
     quantity: number;
+    status: string;
+    expires_at: string | null;
+    remaining_seconds: number;
+    ticket: {
+        id: number;
+        price: string;
+        max_per_user: number | null;
+        available_quantity: number;
+    };
+    ticket_type: {
+        id: number;
+        name: string;
+    };
+    event: {
+        id: number;
+        slug: string;
+        title: string;
+    };
 }
 
-function loadCartFromStorage(): CartItem[] {
-    if (typeof window === 'undefined') return [];
-    try {
-        const raw = localStorage.getItem(CART_STORAGE_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw) as unknown;
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
+interface CartPayload {
+    items: CartItem[];
+    summary: {
+        total_items: number;
+        total_amount: number;
+    };
 }
 
-function saveCartToStorage(items: CartItem[]): void {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-    } catch {
-        return;
-    }
+interface CartActionOptions {
+    onSuccess?: () => void;
+    onError?: (errors: Record<string, string>) => void;
+    onFinish?: () => void;
 }
 
-const items = ref<CartItem[]>(loadCartFromStorage());
-
-watch(
-    items,
-    (val) => saveCartToStorage(val),
-    { deep: true },
-);
-
-const totalItems = computed(() =>
-    items.value.reduce((sum, i) => sum + i.quantity, 0),
-);
-
-const totalAmount = computed(() =>
-    items.value.reduce((sum, i) => sum + parseFloat(i.price) * i.quantity, 0),
-);
-
-const isEmpty = computed(() => items.value.length === 0);
-
-function add(item: Omit<CartItem, 'quantity'> & { quantity?: number }) {
-    const qty = Math.max(1, item.quantity ?? 1);
-    const existing = items.value.find(
-        (i) => i.eventId === item.eventId && i.ticketId === item.ticketId,
-    );
-
-    if (existing) {
-        const nextQuantity = existing.maxPerUser != null
-            ? Math.min(existing.quantity + qty, existing.maxPerUser)
-            : existing.quantity + qty;
-
-        items.value = items.value.map((i) =>
-            i.eventId === item.eventId && i.ticketId === item.ticketId
-                ? { ...i, quantity: nextQuantity }
-                : i,
-        );
-        return;
-    }
-
-    const initialQuantity = item.maxPerUser != null
-        ? Math.min(qty, item.maxPerUser)
-        : qty;
-
-    items.value = [...items.value, { ...item, quantity: initialQuantity }];
-}
-
-function remove(eventId: number, ticketId: number) {
-    items.value = items.value.filter(
-        (i) => !(i.eventId === eventId && i.ticketId === ticketId),
-    );
-}
-
-function setQuantity(eventId: number, ticketId: number, quantity: number) {
-    if (quantity <= 0) {
-        remove(eventId, ticketId);
-        return;
-    }
-
-    const existing = items.value.find(
-        (i) => i.eventId === eventId && i.ticketId === ticketId,
-    );
-
-    if (!existing) {
-        return;
-    }
-
-    const nextQuantity = existing.maxPerUser != null
-        ? Math.min(quantity, existing.maxPerUser)
-        : quantity;
-
-    items.value = items.value.map((i) =>
-        i.eventId === eventId && i.ticketId === ticketId
-            ? { ...i, quantity: nextQuantity }
-            : i,
-    );
-}
-
-function clear() {
-    items.value = [];
-}
+const emptyCart: CartPayload = {
+    items: [],
+    summary: {
+        total_items: 0,
+        total_amount: 0,
+    },
+};
 
 export function useCart() {
+    const page = usePage();
+
+    const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
+    const cart = computed(() => (page.props.cart as CartPayload | null) ?? emptyCart);
+    const items = computed(() => cart.value.items ?? []);
+    const totalItems = computed(() => cart.value.summary?.total_items ?? 0);
+    const totalAmount = computed(() => cart.value.summary?.total_amount ?? 0);
+    const isEmpty = computed(() => items.value.length === 0);
+
+    const getItemByTicketId = (ticketId: number): CartItem | undefined =>
+        items.value.find((item) => item.ticket.id === ticketId);
+
+    const quantityForTicket = (ticketId: number): number =>
+        getItemByTicketId(ticketId)?.quantity ?? 0;
+
+    const add = (ticketId: number, quantity = 1, options: CartActionOptions = {}): void => {
+        router.post(
+            urls.value.cartHoldsStore ?? '/cart/hold',
+            {
+                ticket_id: ticketId,
+                quantity,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onSuccess: options.onSuccess,
+                onError: options.onError,
+                onFinish: options.onFinish,
+            },
+        );
+    };
+
+    const remove = (holdId: number, options: CartActionOptions = {}): void => {
+        router.delete(`${urls.value.cartHoldsBase ?? '/cart/hold'}/${holdId}`, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+            onSuccess: options.onSuccess,
+            onError: options.onError,
+            onFinish: options.onFinish,
+        });
+    };
+
+    const update = (holdId: number, quantity: number, options: CartActionOptions = {}): void => {
+        router.patch(
+            `${urls.value.cartHoldsUpdateBase ?? '/cart/hold'}/${holdId}`,
+            { quantity },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onSuccess: options.onSuccess,
+                onError: options.onError,
+                onFinish: options.onFinish,
+            },
+        );
+    };
+
     return {
+        cart,
         items,
         totalItems,
         totalAmount,
         isEmpty,
         add,
         remove,
-        setQuantity,
-        clear,
+        update,
+        getItemByTicketId,
+        quantityForTicket,
     };
 }

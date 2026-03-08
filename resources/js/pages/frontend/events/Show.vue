@@ -26,6 +26,8 @@ defineProps<{
                 price: string;
                 quantity_total: number | null;
                 max_per_user: number | null;
+                available_quantity: number;
+                user_hold_quantity: number;
             }>;
         }>;
     };

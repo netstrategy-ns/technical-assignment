@@ -12,9 +12,12 @@ import { useCart } from '@/composables/useCart';
 
 const page = usePage();
 const cartUrl = computed(() => (page.props.urls as Record<string, string>)?.cart ?? '/cart');
+const checkoutUrl = computed(() => (page.props.urls as Record<string, string>)?.checkout ?? '/checkout');
 
-const { items, totalItems, totalAmount, isEmpty, remove, setQuantity } = useCart();
-const maxReachedMessages = ref<Record<string, boolean>>({});
+const { items, totalItems, totalAmount, isEmpty, remove, update } = useCart();
+const maxReachedMessages = ref<Record<number, boolean>>({});
+const actionErrors = ref<Record<number, string>>({});
+const loadingHolds = ref<Record<number, boolean>>({});
 
 const hasCartItems = computed(() => totalItems.value > 0);
 const badgeLabel = computed(() =>
@@ -27,44 +30,50 @@ const itemsByEvent = computed(() => {
     const byEvent = new Map<
         number,
         {
-            eventId: number;
-            eventSlug: string;
-            eventTitle: string;
+            event: {
+                id: number;
+                slug: string;
+                title: string;
+            };
             eventTotal: number;
             lines: Array<{
+                holdId: number;
                 ticketId: number;
                 ticketTypeName: string;
                 price: string;
                 maxPerUser: number | null;
                 quantity: number;
                 lineTotal: number;
+                expiresAt: string | null;
+                availableQuantity: number;
             }>;
         }
     >();
 
     for (const item of items.value) {
-        const priceNumber = parseFloat(item.price);
+        const priceNumber = parseFloat(item.ticket.price);
         const lineTotal = priceNumber * item.quantity;
 
-        let group = byEvent.get(item.eventId);
+        let group = byEvent.get(item.event.id);
         if (!group) {
             group = {
-                eventId: item.eventId,
-                eventSlug: item.eventSlug,
-                eventTitle: item.eventTitle,
+                event: item.event,
                 eventTotal: 0,
                 lines: [],
             };
-            byEvent.set(item.eventId, group);
+            byEvent.set(item.event.id, group);
         }
 
         group.lines.push({
-            ticketId: item.ticketId,
-            ticketTypeName: item.ticketTypeName,
-            price: item.price,
-            maxPerUser: item.maxPerUser,
+            holdId: item.id,
+            ticketId: item.ticket.id,
+            ticketTypeName: item.ticket_type.name,
+            price: item.ticket.price,
+            maxPerUser: item.ticket.max_per_user,
             quantity: item.quantity,
             lineTotal,
+            expiresAt: item.expires_at,
+            availableQuantity: item.ticket.available_quantity,
         });
         group.eventTotal += lineTotal;
     }
@@ -79,33 +88,76 @@ function formatPrice(value: number): string {
     }).format(value);
 }
 
-function decrementQuantity(eventId: number, ticketId: number, quantity: number) {
-    if (quantity <= 1) {
-        remove(eventId, ticketId);
+function maxQuantityForHold(availableQuantity: number, maxPerUser: number | null): number {
+    if (maxPerUser != null && maxPerUser > 0) {
+        return Math.min(availableQuantity, maxPerUser);
+    }
+
+    return availableQuantity;
+}
+
+function hasReachedUserLimit(quantity: number, maxPerUser: number | null): boolean {
+    return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
+}
+
+function decrementQuantity(holdId: number, quantity: number) {
+    if (loadingHolds.value[holdId]) {
         return;
     }
 
-    maxReachedMessages.value[`${eventId}-${ticketId}`] = false;
-    setQuantity(eventId, ticketId, quantity - 1);
+    maxReachedMessages.value[holdId] = false;
+    actionErrors.value[holdId] = '';
+
+    if (quantity <= 1) {
+        loadingHolds.value[holdId] = true;
+        remove(holdId, {
+            onFinish: () => {
+                loadingHolds.value[holdId] = false;
+            },
+        });
+        return;
+    }
+
+    loadingHolds.value[holdId] = true;
+    update(holdId, quantity - 1, {
+        onError: (errors) => {
+            actionErrors.value[holdId] = errors.quantity ?? 'Impossibile aggiornare la quantita.';
+        },
+        onFinish: () => {
+            loadingHolds.value[holdId] = false;
+        },
+    });
 }
 
 function incrementQuantity(
-    eventId: number,
-    ticketId: number,
+    holdId: number,
     quantity: number,
+    availableQuantity: number,
     maxPerUser: number | null,
 ) {
-    if (maxPerUser != null && quantity >= maxPerUser) {
-        maxReachedMessages.value[`${eventId}-${ticketId}`] = true;
+    if (loadingHolds.value[holdId]) {
         return;
     }
 
-    maxReachedMessages.value[`${eventId}-${ticketId}`] = false;
-    setQuantity(eventId, ticketId, quantity + 1);
-}
+    const maxQuantity = maxQuantityForHold(availableQuantity, maxPerUser);
 
-function hasReachedMaxMessage(eventId: number, ticketId: number) {
-    return maxReachedMessages.value[`${eventId}-${ticketId}`] === true;
+    if (quantity >= maxQuantity) {
+        maxReachedMessages.value[holdId] = true;
+        return;
+    }
+
+    maxReachedMessages.value[holdId] = false;
+    actionErrors.value[holdId] = '';
+    loadingHolds.value[holdId] = true;
+
+    update(holdId, quantity + 1, {
+        onError: (errors) => {
+            actionErrors.value[holdId] = errors.quantity ?? 'Impossibile aggiornare la quantita.';
+        },
+        onFinish: () => {
+            loadingHolds.value[holdId] = false;
+        },
+    });
 }
 </script>
 
@@ -137,15 +189,15 @@ function hasReachedMaxMessage(eventId: number, ticketId: number) {
                 </p>
             </template>
             <template v-else>
-                <div class="max-h-88 space-y-3 overflow-y-auto px-2 pb-2">
+                <div class="space-y-3 px-2 pb-2">
                     <section
                         v-for="eventGroup in itemsByEvent"
-                        :key="eventGroup.eventId"
+                        :key="eventGroup.event.id"
                         class="rounded-lg border border-sidebar-border/50 bg-card/60"
                     >
                         <div class="border-b border-sidebar-border/50 px-3 py-2">
-                            <p class="truncate text-sm font-medium" :title="eventGroup.eventTitle">
-                                {{ eventGroup.eventTitle }}
+                            <p class="truncate text-sm font-medium" :title="eventGroup.event.title">
+                                {{ eventGroup.event.title }}
                             </p>
                             <p class="text-xs text-muted-foreground">
                                 Totale evento: {{ formatPrice(eventGroup.eventTotal) }}
@@ -155,7 +207,7 @@ function hasReachedMaxMessage(eventId: number, ticketId: number) {
                         <ul class="divide-y divide-sidebar-border/40">
                             <li
                                 v-for="line in eventGroup.lines"
-                                :key="line.ticketId"
+                                :key="line.holdId"
                                 class="space-y-2 px-3 py-3 text-sm"
                             >
                                 <div class="flex items-start justify-between gap-3">
@@ -164,15 +216,25 @@ function hasReachedMaxMessage(eventId: number, ticketId: number) {
                                         <p class="text-xs text-muted-foreground">
                                             Prezzo unitario: {{ formatPrice(parseFloat(line.price)) }}
                                         </p>
-                                        <p v-if="line.maxPerUser" class="text-xs text-muted-foreground">
+                                        <p
+                                            v-if="line.maxPerUser"
+                                            class="text-xs"
+                                            :class="hasReachedUserLimit(line.quantity, line.maxPerUser)
+                                                ? 'font-medium text-destructive'
+                                                : 'text-muted-foreground'"
+                                        >
                                             Max per utente: {{ line.maxPerUser }}
+                                        </p>
+                                        <p v-if="line.expiresAt" class="text-xs text-muted-foreground">
+                                            Prenotazione fino alle
+                                            {{ new Date(line.expiresAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}
                                         </p>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon-sm"
                                         aria-label="Rimuovi dal carrello"
-                                        @click="remove(eventGroup.eventId, line.ticketId)"
+                                        @click="remove(line.holdId)"
                                     >
                                         <Trash2 class="size-4" />
                                     </Button>
@@ -185,7 +247,8 @@ function hasReachedMaxMessage(eventId: number, ticketId: number) {
                                                 variant="outline"
                                                 size="icon-sm"
                                                 aria-label="Diminuisci quantità"
-                                                @click="decrementQuantity(eventGroup.eventId, line.ticketId, line.quantity)"
+                                                :disabled="loadingHolds[line.holdId]"
+                                                @click="decrementQuantity(line.holdId, line.quantity)"
                                             >
                                                 <Minus class="size-4" />
                                             </Button>
@@ -196,20 +259,25 @@ function hasReachedMaxMessage(eventId: number, ticketId: number) {
                                                 variant="outline"
                                                 size="icon-sm"
                                                 aria-label="Aumenta quantità"
-                                                :disabled="line.maxPerUser != null && line.quantity >= line.maxPerUser"
-                                                @click="incrementQuantity(eventGroup.eventId, line.ticketId, line.quantity, line.maxPerUser)"
+                                                :disabled="loadingHolds[line.holdId] || line.quantity >= maxQuantityForHold(line.availableQuantity, line.maxPerUser)"
+                                                @click="incrementQuantity(line.holdId, line.quantity, line.availableQuantity, line.maxPerUser)"
                                             >
                                                 <Plus class="size-4" />
                                             </Button>
                                         </div>
                                         <p
-                                            v-if="hasReachedMaxMessage(eventGroup.eventId, line.ticketId)"
+                                            v-if="maxReachedMessages[line.holdId]"
                                             class="mt-2 text-xs text-amber-600 dark:text-amber-400"
                                         >
                                             Hai raggiunto il limite massimo per utente.
                                         </p>
+                                        <p
+                                            v-if="actionErrors[line.holdId]"
+                                            class="mt-2 text-xs text-destructive"
+                                        >
+                                            {{ actionErrors[line.holdId] }}
+                                        </p>
                                     </div>
-
                                     <p class="text-sm font-medium">
                                         {{ formatPrice(line.lineTotal) }}
                                     </p>
@@ -222,12 +290,19 @@ function hasReachedMaxMessage(eventId: number, ticketId: number) {
                     Totale: {{ totalAmountFormatted }}
                 </div>
             </template>
-            <div class="border-t border-sidebar-border/50 p-2">
+            <div class="space-y-2 border-t border-sidebar-border/50 p-2">
                 <Link
                     :href="cartUrl"
                     class="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
                     Vai al carrello
+                </Link>
+                <Link
+                    v-if="!isEmpty"
+                    :href="checkoutUrl"
+                    class="block w-full rounded-md border border-sidebar-border/70 px-3 py-2 text-center text-sm font-medium text-foreground hover:bg-accent/50"
+                >
+                    Vai al checkout
                 </Link>
             </div>
         </DropdownMenuContent>
