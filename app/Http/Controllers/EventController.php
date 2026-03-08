@@ -14,8 +14,10 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $categorySlug = $request->filled('category') ? $request->string('category')->toString() : null;
-        $search = $request->filled('search') ? $request->string('search')->trim()->toString() : null;
-        $location = $request->filled('location') ? $request->string('location')->trim()->toString() : null;
+        $search = $request->filled('search') ? $request->string('search')->toString() : null;
+        $searchForFilter = $search !== null ? trim($search) : null;
+        $location = $request->filled('location') ? $request->string('location')->toString() : null;
+        $locationForFilter = $location !== null ? trim($location) : null;
         $startDate = $request->filled('start_date') ? $request->string('start_date')->trim()->toString() : null;
         $endDate = $request->filled('end_date') ? $request->string('end_date')->trim()->toString() : null;
         $sort = $request->filled('sort') ? $request->string('sort')->toString() : 'date_asc';
@@ -34,12 +36,12 @@ class EventController extends Controller
             $query->filterByCategory($categorySlug);
         }
 
-        if ($search !== null && $search !== '') {
-            $query->searchByTitle($search);
+        if ($searchForFilter !== null && $searchForFilter !== '') {
+            $query->searchByTitle($searchForFilter);
         }
 
-        if ($location !== null && $location !== '') {
-            $query->filterByLocation($location);
+        if ($locationForFilter !== null && $locationForFilter !== '') {
+            $query->filterByLocation($locationForFilter);
         }
 
         if ($startDate !== null && $endDate !== null) {
@@ -50,8 +52,8 @@ class EventController extends Controller
             $query->filterByStartDate($startDate);
         }
 
-        $perPage = (int) $request->input('per_page', 25);
-        $perPage = in_array($perPage, [10, 25, 50], true) ? $perPage : 25;
+        $perPage = (int) $request->input('per_page', 24);
+        $perPage = max(1, min(100, $perPage ?: 24));
         $events = $query->paginate($perPage)->withQueryString();
 
         $categories = EventCategory::query()->orderBy('name')->get(['id', 'name', 'slug']);
@@ -64,12 +66,12 @@ class EventController extends Controller
             'events' => $events,
             'categories' => $categories,
             'filters' => [
-                'featured' => $request->boolean('featured'),
-                'category' => $categorySlug,
                 'search' => $search,
+                'category' => $categorySlug,
                 'location' => $location,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'featured' => $request->boolean('featured'),
                 'sort' => $sort,
             ],
             'activeCategory' => $activeCategory ? ['id' => $activeCategory->id, 'name' => $activeCategory->name, 'slug' => $activeCategory->slug] : null,
