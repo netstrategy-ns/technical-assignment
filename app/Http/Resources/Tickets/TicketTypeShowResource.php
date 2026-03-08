@@ -24,6 +24,14 @@ class TicketTypeShowResource extends JsonResource
                 'price' => $ticket->price,
                 'quantity_total' => $ticket->quantity_total,
                 'max_per_user' => $ticket->max_per_user,
+                'available_quantity' => $ticket->getAvailableQuantity(),
+                'user_hold_quantity' => $request->user() === null
+                    ? 0
+                    : (int) $ticket->holds()
+                        ->active()
+                        ->valid()
+                        ->where('user_id', $request->user()->id)
+                        ->sum('quantity'),
             ]),
         ];
     }

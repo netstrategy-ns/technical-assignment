@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\CartHoldService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Middleware;
@@ -42,6 +43,8 @@ class HandleInertiaRequests extends Middleware
         $publicUrls = [
             'eventsIndex' => Route::has('events.index') ? route('events.index') : '/events',
             'cart' => Route::has('cart.index') ? route('cart.index') : '/cart',
+            'cartHoldsStore' => Route::has('cart.holds.store') ? route('cart.holds.store') : '/cart/hold',
+            'cartHoldsBase' => '/cart/hold',
             'checkout' => Route::has('checkout.index') ? route('checkout.index') : '/checkout',
             'orders' => Route::has('orders.index') ? route('orders.index') : '/orders',
         ];
@@ -70,6 +73,9 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'message' => $request->session()->get('message'),
             ],
+            'cart' => $request->user() === null
+                ? null
+                : fn () => app(CartHoldService::class)->buildCartPayload($request->user()),
         ];
     }
 }

@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CartController extends Controller
 {
-    /**
-     * Pagina carrello (contenuto gestito client-side da useCart; in modulo 04 si potranno passare hold dal backend).
-     */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('frontend/cart/Index');
+        return Inertia::render('frontend/cart/Index', [
+            'cart' => app(\App\Services\CartHoldService::class)->buildCartPayload($request->user()),
+        ]);
     }
 }

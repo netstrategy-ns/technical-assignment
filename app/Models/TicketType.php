@@ -65,9 +65,10 @@ class TicketType extends Model
     public function getAvailableQuantity(): int
     {
         $quota = (int) ($this->quota?->quantity ?? 0);
-        $sold = (int) $this->orderItems()->sum('quantity');
+        $sold = $this->tickets->sum(fn (Ticket $ticket): int => $ticket->soldQuantity());
+        $held = $this->tickets->sum(fn (Ticket $ticket): int => $ticket->validHeldQuantity());
 
-        return max(0, $quota - $sold);
+        return max(0, $quota - $sold - $held);
     }
 
 }
