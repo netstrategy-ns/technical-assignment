@@ -72,7 +72,7 @@ class EventSeeder extends Seeder
                 'ends_at' => $endsAt,
                 'sale_starts_at' => $saleStartsAt,
                 'available_tickets' => $availableTickets,
-                'image_url' => fake()->imageUrl(),
+                'image_url' => 'https://placehold.co/640x480?text=' . rawurlencode($title),
             ]);
         }
     }
