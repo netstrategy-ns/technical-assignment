@@ -56,4 +56,9 @@ class Hold extends Model
             && $this->expires_at !== null
             && $this->expires_at->isFuture();
     }
+
+    public function isExpired(): bool
+    {
+        return ! $this->isValid();
+    }
 }

@@ -299,6 +299,36 @@ describe('Controllo disponibilità e carrello', function (): void {
         expect($otherHold->fresh()->quantity)->toBe(2);
     });
 
+    test('PATCH /cart/hold rifiuta una prenotazione gia scaduta', function (): void {
+        $user = User::factory()->create();
+        ['ticket' => $ticket] = createTicketForHoldTest([], [
+            'max_per_user' => 10,
+        ]);
+
+        actingAs($user);
+
+        post('/cart/hold', [
+            'ticket_id' => $ticket->id,
+            'quantity' => 2,
+        ])->assertRedirect();
+
+        $hold = Hold::query()->firstOrFail();
+
+        $hold->update([
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        from('/cart')->patch('/cart/hold/'.$hold->id, [
+            'quantity' => 3,
+        ])
+            ->assertRedirect('/cart')
+            ->assertSessionHasErrors('quantity');
+
+        expect($hold->fresh()->status)->toBe(HoldStatusEnum::ACTIVE);
+        expect($hold->fresh()->expires_at->isPast())->toBeTrue();
+        expect($hold->fresh()->quantity)->toBe(2);
+    });
+
     test('la disponibilita per ticket considera venduti e hold validi', function (): void {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();

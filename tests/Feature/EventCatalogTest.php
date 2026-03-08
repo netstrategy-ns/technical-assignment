@@ -39,7 +39,7 @@ function createEventForTest(array $overrides = []): Event
     ], $overrides));
 }
 
-describe('Catalogo eventi (pubblico)', function (): void {
+describe('Catalogo eventi', function (): void {
     test('GET / ritorna 200 e props con eventi in evidenza', function (): void {
         $response = get('/');
 
@@ -110,7 +110,7 @@ describe('Catalogo eventi (pubblico)', function (): void {
     });
 });
 
-describe('Ricerca e filtri eventi (modulo 03)', function (): void {
+describe('Ricerca e filtri eventi', function (): void {
     test('GET /events?search=... restituisce eventi filtrati per titolo', function (): void {
         $event = createEventForTest(['title' => 'Concerto Rock Unico Cercabile']);
         $other = createEventForTest(['title' => 'Festival Jazz Altro']);
