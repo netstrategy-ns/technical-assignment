@@ -49,27 +49,27 @@ const {
     buildQuery,
 } = useEventFiltersPanel(baseUrl, filtersRef, {
     preserveState: true,
-    debounceMs: 400,
+    debounceMs: 700,
     searchInputRef,
 });
 
-function onAvailableTicketsChange(value: boolean) {
+const onAvailableTicketsChange = (value: boolean): void => {
     const query = buildQuery();
     query.available_tickets = value;
     const url = buildEventsIndexUrl(baseUrl, query, { perPage: currentPerPage.value });
     router.visit(url);
-}
+};
 
-function id(name: string): string {
+const id = (name: string): string => {
     return props.filterIdPrefix ? `${props.filterIdPrefix}-${name}` : name;
-}
+};
 
-function onFeaturedChange(value: boolean) {
+const onFeaturedChange = (value: boolean): void => {
     const query = buildQuery();
     query.featured = value;
     const url = buildEventsIndexUrl(baseUrl, query, { perPage: currentPerPage.value });
     router.visit(url);
-}
+};
 </script>
 
 <template>
@@ -81,7 +81,7 @@ function onFeaturedChange(value: boolean) {
             <div class="space-y-2">
                 <Label :for="id('search')">Cerca per titolo</Label>
                 <Input
-                    :ref="(el) => { searchInputRef = el as typeof searchInputRef }"
+                    ref="searchInputRef"
                     :id="id('search')"
                     v-model="search"
                     type="search"

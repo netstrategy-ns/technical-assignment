@@ -136,10 +136,21 @@ export const useEventFiltersPanel = (
     const availableTickets = ref(filtersFromServer.value.available_tickets ?? false);
     const sort = ref(filtersFromServer.value.sort ?? DEFAULT_SORT);
 
+    const getSearchInputElement = (): HTMLInputElement | null =>
+        searchInputRef?.value?.$el ?? null;
+
+    const isSearchInputFocused = (): boolean => {
+        const input = getSearchInputElement();
+
+        return input != null && typeof document !== 'undefined' && document.activeElement === input;
+    };
+
     watch(
         filtersFromServer,
         (f) => {
-            search.value = f.search ?? '';
+            if (!isSearchInputFocused()) {
+                search.value = f.search ?? '';
+            }
             category.value = f.category ?? '';
             start_date.value = f.start_date ?? '';
             end_date.value = f.end_date ?? '';
@@ -172,7 +183,7 @@ export const useEventFiltersPanel = (
             resetPage: true,
             perPage: currentPerPage.value,
         });
-        router.visit(url, { preserveState });
+        router.visit(url, { preserveState, replace: true, preserveScroll: true });
     };
 
     const applyFiltersWithPreservedFocus = () => {
@@ -182,6 +193,8 @@ export const useEventFiltersPanel = (
         });
         router.visit(url, {
             preserveState,
+            replace: true,
+            preserveScroll: true,
             onFinish: () => {
                 nextTick(() => searchInputRef?.value?.$el?.focus());
             },
@@ -207,7 +220,7 @@ export const useEventFiltersPanel = (
             { featured: false, available_tickets: false, sort: DEFAULT_SORT },
             { perPage: currentPerPage.value },
         );
-        router.visit(url, { preserveState });
+        router.visit(url, { preserveState, replace: true, preserveScroll: true });
     };
 
     const hasActiveFilters = computed(() => {

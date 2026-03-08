@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head } from '@inertiajs/vue3';
+import TicketsCard from '@/components/custom/Cards/TicketsCard.vue';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
-
-const page = usePage();
-const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 
 defineProps<{
     event: {
@@ -72,40 +69,7 @@ defineProps<{
                     La vendita non è ancora iniziata. I biglietti non sono acquistabili.
                 </div>
 
-                <section class="mt-8">
-                    <h2 class="mb-4 text-lg font-semibold">Biglietti</h2>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <div
-                            v-for="tt in event.ticket_types"
-                            :key="tt.id"
-                            class="rounded-xl border border-sidebar-border/70 bg-card p-4"
-                        >
-                            <h3 class="font-medium">{{ tt.name }}</h3>
-                            <p class="text-sm text-muted-foreground">
-                                <template v-if="tt.quota_quantity > 0">
-                                    Disponibili: <strong>{{ tt.available_quantity }}</strong> su <strong>{{ tt.quota_quantity }}</strong>
-                                    <template v-if="tt.available_quantity === 0"> (esaurito)</template>
-                                </template>
-                                <template v-else>
-                                    Quota non impostata per questa tipologia.
-                                </template>
-                            </p>
-                            <ul class="mt-2 space-y-2">
-                                <li
-                                    v-for="ticket in tt.tickets"
-                                    :key="ticket.id"
-                                    class="flex items-center justify-between text-sm"
-                                >
-                                    <span>Prezzo: € {{ ticket.price }}</span>
-                                    <span v-if="ticket.max_per_user">Max {{ ticket.max_per_user }} per utente</span>
-                                </li>
-                            </ul>
-                            <p v-if="saleNotStarted" class="mt-2 text-sm text-muted-foreground">
-                                Aggiungi al carrello disponibile quando la vendita sarà aperta.
-                            </p>
-                        </div>
-                    </div>
-                </section>
+                <TicketsCard :event="event" :sale-not-started="saleNotStarted" />
             </article>
         </div>
     </FrontendLayout>

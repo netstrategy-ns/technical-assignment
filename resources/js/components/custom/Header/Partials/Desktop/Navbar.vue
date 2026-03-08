@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import CartDropdown from '../CartDropdown.vue';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
@@ -23,6 +24,7 @@ const user = computed(() => (page.props.auth as { user?: unknown })?.user);
         >
             Eventi
         </Link>
+        <CartDropdown v-if="user" />
         <template v-if="user">
             <Link
                 href="/dashboard"

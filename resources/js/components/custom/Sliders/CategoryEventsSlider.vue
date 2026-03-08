@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import { Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/vue';
+import { computed } from 'vue';
 import EventCard from '@/components/custom/Cards/EventCard.vue';
 import type { EventCardEvent } from '@/composables/useEvents';
 import 'swiper/css';

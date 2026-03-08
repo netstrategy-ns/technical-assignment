@@ -15,10 +15,10 @@ withDefaults(
     { eventsBaseUrl: '/events' },
 );
 
-function heroBackgroundStyle(imageUrl: string | null): Record<string, string> {
+const heroBackgroundStyle = (imageUrl: string | null): Record<string, string> => {
     if (!imageUrl) return {};
     return { backgroundImage: `url(${imageUrl})` };
-}
+};
 </script>
 
 <template>

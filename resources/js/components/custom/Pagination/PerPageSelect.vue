@@ -28,16 +28,16 @@ const emit = defineEmits<{
     'update:modelValue': [value: number];
 }>();
 
-function normalize(value: number): PerPageOption {
+const normalize = (value: number): PerPageOption => {
     const opts = props.options as readonly number[];
     return opts.includes(value) ? (value as PerPageOption) : DEFAULT_PER_PAGE;
-}
+};
 
 const displayValue = () => normalize(props.modelValue);
 
-function onSelect(opt: number) {
+const onSelect = (opt: number): void => {
     emit('update:modelValue', opt);
-}
+};
 </script>
 
 <template>

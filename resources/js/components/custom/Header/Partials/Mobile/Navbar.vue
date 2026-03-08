@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import CartDropdown from '../CartDropdown.vue';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
@@ -17,30 +18,34 @@ const navLinkClass =
 </script>
 
 <template>
-    <Sheet>
-        <SheetTrigger as-child>
-            <Button variant="ghost" size="icon" aria-label="Apri menu">
-                <Menu class="size-5" />
-            </Button>
-        </SheetTrigger>
-        <SheetContent side="right" class="w-full max-w-full sm:max-w-full">
-            <SheetHeader class="flex flex-row items-center justify-between space-y-0 border-b border-sidebar-border/80 pb-4 pr-12">
-                <Link href="/" class="inline-block shrink-0 transition-opacity hover:opacity-90">
-                    <AppLogo class="h-9 w-auto" />
-                </Link>
-                <SheetTitle class="sr-only">Menu di navigazione</SheetTitle>
-            </SheetHeader>
-            <nav class="mt-6 flex flex-col gap-1" aria-label="Navigazione principale">
-                <Link href="/" :class="navLinkClass">Home</Link>
-                <Link :href="eventsIndex" :class="navLinkClass">Eventi</Link>
-                <template v-if="user">
-                    <Link href="/dashboard" :class="navLinkClass">Dashboard</Link>
-                </template>
-                <template v-else>
-                    <Link href="/login" :class="navLinkClass">Accedi</Link>
-                    <Link v-if="canRegister" href="/register" :class="navLinkClass">Registrati</Link>
-                </template>
-            </nav>
-        </SheetContent>
-    </Sheet>
+    <div class="flex items-center gap-1">
+        <CartDropdown v-if="user" />
+        <Sheet>
+            <SheetTrigger as-child>
+                <Button variant="ghost" size="icon" aria-label="Apri menu">
+                    <Menu class="size-5" />
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="right" class="w-full max-w-full sm:max-w-full">
+                <SheetHeader class="flex flex-row items-center justify-between space-y-0 border-b border-sidebar-border/80 pb-4 pr-12">
+                    <Link href="/" class="inline-block shrink-0 transition-opacity hover:opacity-90">
+                        <AppLogo class="h-9 w-auto" />
+                    </Link>
+                    <SheetTitle class="sr-only">Menu di navigazione</SheetTitle>
+                </SheetHeader>
+                <nav class="mt-6 flex flex-col gap-1" aria-label="Navigazione principale">
+                    <Link href="/" :class="navLinkClass">Home</Link>
+                    <Link :href="eventsIndex" :class="navLinkClass">Eventi</Link>
+                    <Link v-if="user" :href="urls.cart ?? '/cart'" :class="navLinkClass">Carrello</Link>
+                    <template v-if="user">
+                        <Link href="/dashboard" :class="navLinkClass">Dashboard</Link>
+                    </template>
+                    <template v-else>
+                        <Link href="/login" :class="navLinkClass">Accedi</Link>
+                        <Link v-if="canRegister" href="/register" :class="navLinkClass">Registrati</Link>
+                    </template>
+                </nav>
+            </SheetContent>
+        </Sheet>
+    </div>
 </template>
