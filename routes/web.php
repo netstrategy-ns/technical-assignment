@@ -14,6 +14,7 @@ Route::get('events/{event:slug}', [EventController::class, 'show'])->name('event
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('cart/hold', [HoldController::class, 'store'])->name('cart.holds.store');
+    Route::patch('cart/hold/{hold}', [HoldController::class, 'update'])->name('cart.holds.update');
     Route::delete('cart/hold/{hold}', [HoldController::class, 'destroy'])->name('cart.holds.destroy');
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 });

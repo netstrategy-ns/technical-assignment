@@ -19,6 +19,7 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\delete;
 use function Pest\Laravel\from;
 use function Pest\Laravel\get;
+use function Pest\Laravel\patch;
 use function Pest\Laravel\post;
 
 uses(RefreshDatabase::class);
@@ -215,6 +216,87 @@ describe('Controllo disponibilità e carrello', function (): void {
 
         expect($hold->status)->toBe(HoldStatusEnum::EXPIRED);
         expect($ticket->fresh()->getAvailableQuantity())->toBe(10);
+    });
+
+    test('PATCH /cart/hold aggiorna la quantita del hold esistente', function (): void {
+        $user = User::factory()->create();
+        ['ticket' => $ticket] = createTicketForHoldTest([], [
+            'max_per_user' => 10,
+        ]);
+
+        actingAs($user);
+
+        post('/cart/hold', [
+            'ticket_id' => $ticket->id,
+            'quantity' => 2,
+        ])->assertRedirect();
+
+        $hold = Hold::query()->firstOrFail();
+
+        patch('/cart/hold/'.$hold->id, [
+            'quantity' => 5,
+        ])->assertRedirect();
+
+        expect($hold->fresh()->quantity)->toBe(5);
+        expect($ticket->fresh()->getAvailableQuantity())->toBe(5);
+    });
+
+    test('PATCH /cart/hold blocca quantita oltre max per utente', function (): void {
+        $user = User::factory()->create();
+        ['ticket' => $ticket, 'event' => $event] = createTicketForHoldTest([], [
+            'max_per_user' => 4,
+        ]);
+
+        actingAs($user);
+
+        post('/cart/hold', [
+            'ticket_id' => $ticket->id,
+            'quantity' => 2,
+        ])->assertRedirect();
+
+        $hold = Hold::query()->firstOrFail();
+
+        from('/cart')->patch('/cart/hold/'.$hold->id, [
+            'quantity' => 5,
+        ])
+            ->assertRedirect('/cart')
+            ->assertSessionHasErrors('quantity');
+
+        expect($hold->fresh()->quantity)->toBe(2);
+        expect($event->fresh())->not->toBeNull();
+    });
+
+    test('PATCH /cart/hold blocca quantita oltre la disponibilita residua', function (): void {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        ['ticket' => $ticket] = createTicketForHoldTest([], [
+            'quantity_total' => 10,
+            'max_per_user' => 10,
+        ]);
+
+        actingAs($user);
+
+        post('/cart/hold', [
+            'ticket_id' => $ticket->id,
+            'quantity' => 6,
+        ])->assertRedirect();
+
+        actingAs($otherUser);
+
+        post('/cart/hold', [
+            'ticket_id' => $ticket->id,
+            'quantity' => 2,
+        ])->assertRedirect();
+
+        $otherHold = Hold::query()->where('user_id', $otherUser->id)->firstOrFail();
+
+        from('/cart')->patch('/cart/hold/'.$otherHold->id, [
+            'quantity' => 5,
+        ])
+            ->assertRedirect('/cart')
+            ->assertSessionHasErrors('quantity');
+
+        expect($otherHold->fresh()->quantity)->toBe(2);
     });
 
     test('la disponibilita per ticket considera venduti e hold validi', function (): void {

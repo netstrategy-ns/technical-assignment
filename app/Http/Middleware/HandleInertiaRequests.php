@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'cart' => Route::has('cart.index') ? route('cart.index') : '/cart',
             'cartHoldsStore' => Route::has('cart.holds.store') ? route('cart.holds.store') : '/cart/hold',
             'cartHoldsBase' => '/cart/hold',
+            'cartHoldsUpdateBase' => '/cart/hold',
             'checkout' => Route::has('checkout.index') ? route('checkout.index') : '/checkout',
             'orders' => Route::has('orders.index') ? route('orders.index') : '/orders',
         ];

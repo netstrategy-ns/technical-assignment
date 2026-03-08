@@ -143,6 +143,49 @@ class CartHoldService
         }, 3);
     }
 
+    public function updateHoldQuantity(User $user, Hold $hold, int $quantity): Hold
+    {
+        if ($hold->user_id !== $user->id) {
+            throw (new ModelNotFoundException())->setModel(Hold::class, [$hold->id]);
+        }
+
+        return DB::transaction(function () use ($hold, $quantity): Hold {
+            $lockedHold = Hold::query()
+                ->with(['ticket.ticketType.event'])
+                ->lockForUpdate()
+                ->findOrFail($hold->id);
+
+            $ticket = Ticket::query()
+                ->with(['ticketType.event'])
+                ->lockForUpdate()
+                ->findOrFail($lockedHold->ticket_id);
+
+            $targetQuantity = max(1, $quantity);
+
+            if ($ticket->max_per_user !== null && $targetQuantity > $ticket->max_per_user) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'Hai superato il limite massimo acquistabile per questo biglietto.',
+                ]);
+            }
+
+            $availableQuantity = $ticket->getAvailableQuantity($lockedHold->id);
+
+            if ($targetQuantity > $availableQuantity) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'La quantita richiesta non e piu disponibile.',
+                ]);
+            }
+
+            $lockedHold->update([
+                'quantity' => $targetQuantity,
+                'expires_at' => now()->addMinutes(self::HOLD_MINUTES),
+                'status' => HoldStatusEnum::ACTIVE,
+            ]);
+
+            return $lockedHold->refresh();
+        }, 3);
+    }
+
     private function mapHold(Hold $hold): array
     {
         $ticket = $hold->ticket;

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Holds\StoreHoldRequest;
+use App\Http\Requests\Holds\UpdateHoldRequest;
 use App\Models\Hold;
 use App\Services\CartHoldService;
 use Illuminate\Http\RedirectResponse;
@@ -31,5 +32,18 @@ class HoldController extends Controller
         return redirect()
             ->back()
             ->with('message', 'Biglietti rimossi dal carrello.');
+    }
+
+    public function update(Hold $hold, UpdateHoldRequest $request, CartHoldService $cartHoldService): RedirectResponse
+    {
+        $cartHoldService->updateHoldQuantity(
+            $request->user(),
+            $hold,
+            (int) $request->integer('quantity'),
+        );
+
+        return redirect()
+            ->back()
+            ->with('message', 'Quantita biglietti aggiornata.');
     }
 }
