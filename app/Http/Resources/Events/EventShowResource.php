@@ -27,7 +27,10 @@ class EventShowResource extends JsonResource
             'sale_starts_at' => $this->sale_starts_at?->toIso8601String(),
             'category' => $this->category ? ['id' => $this->category->id, 'name' => $this->category->name] : null,
             'venueType' => $this->venueType ? ['id' => $this->venueType->id, 'name' => $this->venueType->name] : null,
-            'ticket_types' => TicketTypeShowResource::collection($this->whenLoaded('ticketTypes')),
+            'ticket_types' => $this->whenLoaded(
+                'ticketTypes',
+                fn ($types) => TicketTypeShowResource::collection($types)->resolve($request),
+            ),
         ];
     }
 }

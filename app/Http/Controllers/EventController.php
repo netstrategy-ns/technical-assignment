@@ -41,6 +41,8 @@ class EventController extends Controller
 
     /**
      * Dettaglio evento con tipologie, offerte (tickets), quote e disponibili per tipo.
+     * Si passa l'array risolto della Resource così il frontend riceve event.* direttamente
+     * (senza wrapper "data" di JsonResource).
      */
     public function show(Event $event): Response
     {
@@ -50,8 +52,9 @@ class EventController extends Controller
             'ticketTypes.tickets',
             'ticketTypes.quota',
         ]);
+        $resource = new EventShowResource($event);
         return Inertia::render('frontend/events/Show', [
-            'event' => new EventShowResource($event),
+            'event' => $resource->resolve(request()),
             'saleNotStarted' => $event->isSaleNotStarted(),
         ]);
     }
