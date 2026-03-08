@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Support\Str;
-
 class Event extends Model
 {
     /** @use HasFactory<\Database\Factories\EventFactory> */
@@ -44,31 +42,6 @@ class Event extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
-    }
-
-    /**
-     * Eventi con lo stesso titolo in date diverse hanno slug diversi.
-     */
-    protected static function booted(): void
-    {
-        static::saving(function (Event $event) {
-            if ($event->isDirty(['title', 'starts_at']) || empty($event->slug)) {
-                $baseSlug = Str::slug($event->title) . '-' . $event->starts_at->format('Y-m-d');
-                $slug = $baseSlug;
-                $n = 1;
-                while (true) {
-                    $query = static::query()->where('slug', $slug);
-                    if ($event->exists) {
-                        $query->where('id', '!=', $event->id);
-                    }
-                    if (! $query->exists()) {
-                        break;
-                    }
-                    $slug = $baseSlug . '-' . (++$n);
-                }
-                $event->slug = $slug;
-            }
-        });
     }
 
 
@@ -144,6 +117,12 @@ class Event extends Model
         return $query->where('is_active', true);
     }
 
+    // Filtra eventi con almeno un biglietto disponibile
+    public function scopeFilterByAvailableTickets(Builder $query): Builder
+    {
+        return $query->where('available_tickets', '>', 0);
+    }
+
     // Filtra eventi per data di inizio
     public function scopeFilterByStartDate(Builder $query, string $startDate): Builder
     {
@@ -162,10 +141,8 @@ class Event extends Model
         return $query->orderBy('starts_at');
     }
 
-    /**
-     * Applica l'ordinamento scelto dalla UI (catalogo eventi).
-     * Valori: date_asc, date_desc, featured_first.
-     */
+
+    // Ordina gli eventi per data o per eventi in evidenza
     public function scopeApplySort(Builder $query, string $sort = 'date_asc'): Builder
     {
         return match ($sort) {
@@ -175,10 +152,31 @@ class Event extends Model
         };
     }
 
-    // Ordina eventi per disponibilità biglietti
-    public function scopeOrderByAvailableTickets(Builder $query): Builder
+    public function isSaleNotStarted(): bool
     {
-        return $query->orderBy('available_tickets', 'desc');
+        return (bool) ($this->sale_starts_at?->isFuture());
+    }
+
+    // Raggruppa gli scopes per filtrare gli eventi
+    public function scopeApplyFilters(Builder $query, array $filters = []): Builder
+    {
+        $startDate = $filters['start_date'] ?? null;
+        $endDate = $filters['end_date'] ?? null;
+
+        if ($startDate !== null && $endDate !== null) {
+            $query->whereBetween('starts_at', [$startDate, $endDate]);
+        } elseif ($startDate !== null) {
+            $query->filterByStartDate($startDate);
+        } elseif ($endDate !== null) {
+            $query->where('starts_at', '<=', $endDate);
+        }
+
+        return $query
+            ->when($filters['search'] ?? null, fn(Builder $q, string $search): Builder => $q->searchByTitle($search))
+            ->when($filters['category'] ?? null, fn(Builder $q, string $categorySlug): Builder => $q->filterByCategory($categorySlug))
+            ->when($filters['location'] ?? null, fn(Builder $q, string $location): Builder => $q->filterByLocation($location))
+            ->when($filters['available_tickets'] ?? false, fn(Builder $q): Builder => $q->filterByAvailableTickets())
+            ->when($filters['featured'] ?? false, fn(Builder $q): Builder => $q->filterByFeatured());
     }
 
 }
