@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3';
-import { computed, ref, toRef } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { ref, toRef } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,13 +12,8 @@ import {
     useEventFiltersPanel,
 } from '@/composables/useEventFilters';
 import type { EventCategoryOption } from '@/composables/useEvents';
-import { PER_PAGE_OPTIONS } from '@/composables/usePagination';
 import { cn } from '@/lib/utils';
 
-/**
- * Pannello filtri per la lista eventi: ricerca, categoria, date, luogo, in evidenza.
- * Usa useEventFiltersPanel per stato e navigazione Inertia; debounce sulla ricerca.
- */
 const props = withDefaults(
     defineProps<{
         categories?: EventCategoryOption[];
@@ -34,7 +29,7 @@ const props = withDefaults(
 );
 
 const filtersRef = toRef(props, 'filters');
-const baseUrl = computed(() => (props.eventsIndexUrl ?? '/events').replace(/\?.*$/, ''));
+const baseUrl = props.eventsIndexUrl ?? '/events';
 const searchInputRef = ref<{ $el?: HTMLInputElement } | null>(null);
 
 const {
@@ -43,36 +38,36 @@ const {
     start_date,
     end_date,
     location,
+    availableTickets,
     featured,
     sort,
+    currentPerPage,
     applyFilters,
     applyFiltersDebounced,
     resetFilters,
     hasActiveFilters,
-} = useEventFiltersPanel(baseUrl.value, filtersRef, {
+    buildQuery,
+} = useEventFiltersPanel(baseUrl, filtersRef, {
     preserveState: true,
     debounceMs: 400,
     searchInputRef,
 });
 
+function onAvailableTicketsChange(value: boolean) {
+    const query = buildQuery();
+    query.available_tickets = value;
+    const url = buildEventsIndexUrl(baseUrl, query, { perPage: currentPerPage.value });
+    router.visit(url);
+}
+
 function id(name: string): string {
     return props.filterIdPrefix ? `${props.filterIdPrefix}-${name}` : name;
 }
 
-/** per_page dalla URL per link Switch "in evidenza" */
-const page = usePage();
-const currentPerPage = computed(() => {
-    const url = new URL(page.url, window.location.origin);
-    const p = url.searchParams.get('per_page');
-    const n = p ? parseInt(p, 10) : NaN;
-    return PER_PAGE_OPTIONS.includes(n as (typeof PER_PAGE_OPTIONS)[number]) ? n : 25;
-});
-
 function onFeaturedChange(value: boolean) {
-    const url = buildEventsIndexUrl(baseUrl.value, {
-        ...props.filters,
-        featured: value,
-    }, { perPage: currentPerPage.value });
+    const query = buildQuery();
+    query.featured = value;
+    const url = buildEventsIndexUrl(baseUrl, query, { perPage: currentPerPage.value });
     router.visit(url);
 }
 </script>
@@ -180,6 +175,16 @@ function onFeaturedChange(value: boolean) {
                 />
                 <Label :for="id('featured')" class=" cursor-pointer font-normal">
                     Solo in evidenza
+                </Label>
+            </div>
+            <div class="flex items-center gap-2 pt-8">
+                <Switch
+                    :id="id('available_tickets')"
+                    :model-value="availableTickets"
+                    @update:model-value="onAvailableTicketsChange"
+                />
+                <Label :for="id('available_tickets')" class=" cursor-pointer font-normal">
+                    Solo con posti disponibili
                 </Label>
             </div>
         </div>

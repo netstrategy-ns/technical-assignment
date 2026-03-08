@@ -1,6 +1,5 @@
 import { router, usePage } from '@inertiajs/vue3';
-import type { MaybeRefOrGetter } from 'vue';
-import { toValue } from 'vue';
+import { updateCurrentUrlParams } from '@/composables/useQueryUrl';
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from '@/constants';
 
 export type PerPageOption = (typeof PER_PAGE_OPTIONS)[number];
@@ -21,27 +20,21 @@ export interface PaginationNavPayload {
     links: PaginationLink[];
 }
 
-export const usePagination = (pagination: MaybeRefOrGetter<PaginationNavPayload>) => {
+// Gestisce la paginazione usando useQueryUrl per aggiornare l'URL corrente
+export const usePagination = () => {
     const page = usePage();
 
-    const getUrlForPage = (pageNumber: number): string | null => {
-        const p = toValue(pagination);
-        const link = p.links.find((l) => l.label === String(pageNumber));
-        return link?.url ?? null;
+    const getUrlForPage = (pageNumber: number): string => {
+        return updateCurrentUrlParams(page.url, { page: pageNumber });
     };
 
     const onPageChange = (pageNumber: number): void => {
         const url = getUrlForPage(pageNumber);
-        if (url) {
-            router.visit(url);
-        }
+        router.visit(url);
     };
 
     const getUrlForPerPage = (perPage: PerPageOption): string => {
-        const base = new URL(page.url, window.location.origin);
-        base.searchParams.set('per_page', String(perPage));
-        base.searchParams.set('page', '1');
-        return base.pathname + base.search;
+        return updateCurrentUrlParams(page.url, { per_page: perPage, page: 1 });
     };
 
     const onPerPageChange = (perPage: PerPageOption): void => {

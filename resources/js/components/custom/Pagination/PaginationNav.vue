@@ -19,7 +19,7 @@ const props = defineProps<{
     class?: string;
 }>();
 
-const { onPageChange } = usePagination(() => props.pagination);
+const { onPageChange } = usePagination();
 </script>
 
 <template>

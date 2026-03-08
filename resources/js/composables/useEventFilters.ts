@@ -3,6 +3,11 @@ import { useDebounceFn } from '@vueuse/core';
 import type { Ref } from 'vue';
 import { computed, nextTick, ref, watch } from 'vue';
 import {
+    buildUrlWithQuery,
+    getNumericQueryParam,
+    normalizeBaseUrl,
+} from '@/composables/useQueryUrl';
+import {
     DEFAULT_PER_PAGE,
     DEFAULT_SORT,
     EVENT_SORT_OPTIONS,
@@ -26,6 +31,7 @@ export interface EventFiltersState {
     location?: string | null;
     start_date?: string | null;
     end_date?: string | null;
+    available_tickets?: boolean;
     sort?: EventSortValue | string | null;
 }
 
@@ -46,8 +52,10 @@ export interface UseEventFiltersPanelReturn {
     start_date: Ref<string>;
     end_date: Ref<string>;
     location: Ref<string>;
+    availableTickets: Ref<boolean>;
     featured: Ref<boolean>;
     sort: Ref<string>;
+    currentPerPage: Ref<number>;
     applyFilters: () => void;
     applyFiltersDebounced: () => void;
     resetFilters: () => void;
@@ -65,40 +73,25 @@ export const buildEventsIndexUrl = (
     filters: EventFiltersState = { featured: false },
     options: BuildEventsIndexUrlOptions = {},
 ): string => {
-    const base = (baseUrl ?? defaultBaseUrl).replace(/\?.*$/, '');
-    const params = new URLSearchParams();
-
-    if (filters.featured) {
-        params.set('featured', '1');
-    }
-    if (filters.category) {
-        params.set('category', filters.category);
-    }
-    if (filters.search != null && filters.search !== '') {
-        params.set('search', filters.search);
-    }
-    if (filters.location != null && filters.location !== '') {
-        params.set('location', filters.location);
-    }
-    if (filters.start_date) {
-        params.set('start_date', filters.start_date);
-    }
-    if (filters.end_date) {
-        params.set('end_date', filters.end_date);
-    }
+    const base = normalizeBaseUrl(baseUrl ?? defaultBaseUrl);
     const sortVal = filters.sort?.trim();
-    if (sortVal && sortVal !== DEFAULT_SORT) {
-        params.set('sort', sortVal);
-    }
-    if (options.resetPage !== false) {
-        params.set('page', '1');
-    }
-    if (options.perPage != null) {
-        params.set('per_page', String(options.perPage));
-    }
 
-    const query = params.toString();
-    return query ? `${base}?${query}` : base;
+    return buildUrlWithQuery(
+        base,
+        {
+            featured: filters.featured,
+            category: filters.category,
+            search: filters.search,
+            location: filters.location,
+            start_date: filters.start_date,
+            end_date: filters.end_date,
+            available_tickets: filters.available_tickets,
+            sort: sortVal && sortVal !== DEFAULT_SORT ? sortVal : undefined,
+            page: options.resetPage !== false ? 1 : undefined,
+            per_page: options.perPage,
+        },
+        defaultBaseUrl,
+    );
 };
 
 
@@ -112,6 +105,7 @@ export const filtersStateFromPayload = (payload: Record<string, unknown>): Event
         location: payload.location != null ? String(payload.location) : null,
         start_date: payload.start_date != null ? String(payload.start_date) : null,
         end_date: payload.end_date != null ? String(payload.end_date) : null,
+        available_tickets: Boolean(payload.available_tickets),
         sort,
     };
 };
@@ -139,6 +133,7 @@ export const useEventFiltersPanel = (
     const end_date = ref(filtersFromServer.value.end_date ?? '');
     const location = ref(filtersFromServer.value.location ?? '');
     const featured = ref(filtersFromServer.value.featured ?? false);
+    const availableTickets = ref(filtersFromServer.value.available_tickets ?? false);
     const sort = ref(filtersFromServer.value.sort ?? DEFAULT_SORT);
 
     watch(
@@ -150,17 +145,16 @@ export const useEventFiltersPanel = (
             end_date.value = f.end_date ?? '';
             location.value = f.location ?? '';
             featured.value = f.featured ?? false;
+            availableTickets.value = f.available_tickets ?? false;
             sort.value = (f.sort as EventSortValue) ?? DEFAULT_SORT;
         },
         { deep: true },
     );
 
-    const currentPerPage = (): number => {
-        const url = new URL(page.url, window.location.origin);
-        const p = url.searchParams.get('per_page');
-        const n = p ? parseInt(p, 10) : NaN;
+    const currentPerPage = computed(() => {
+        const n = getNumericQueryParam(page.url, 'per_page', DEFAULT_PER_PAGE);
         return PER_PAGE_OPTIONS.includes(n as (typeof PER_PAGE_OPTIONS)[number]) ? n : DEFAULT_PER_PAGE;
-    };
+    });
 
     const buildQuery = (): EventFiltersState => ({
         featured: featured.value,
@@ -169,13 +163,14 @@ export const useEventFiltersPanel = (
         location: location.value ?? undefined,
         start_date: start_date.value || undefined,
         end_date: end_date.value || undefined,
+        available_tickets: availableTickets.value,
         sort: sort.value || DEFAULT_SORT,
     });
 
     const applyFilters = () => {
         const url = buildEventsIndexUrl(baseUrl, buildQuery(), {
             resetPage: true,
-            perPage: currentPerPage(),
+            perPage: currentPerPage.value,
         });
         router.visit(url, { preserveState });
     };
@@ -183,7 +178,7 @@ export const useEventFiltersPanel = (
     const applyFiltersWithPreservedFocus = () => {
         const url = buildEventsIndexUrl(baseUrl, buildQuery(), {
             resetPage: true,
-            perPage: currentPerPage(),
+            perPage: currentPerPage.value,
         });
         router.visit(url, {
             preserveState,
@@ -204,9 +199,14 @@ export const useEventFiltersPanel = (
         start_date.value = '';
         end_date.value = '';
         location.value = '';
+        availableTickets.value = false;
         featured.value = false;
         sort.value = DEFAULT_SORT;
-        const url = buildEventsIndexUrl(baseUrl, { featured: false, sort: DEFAULT_SORT }, { perPage: currentPerPage() });
+        const url = buildEventsIndexUrl(
+            baseUrl,
+            { featured: false, available_tickets: false, sort: DEFAULT_SORT },
+            { perPage: currentPerPage.value },
+        );
         router.visit(url, { preserveState });
     };
 
@@ -219,6 +219,7 @@ export const useEventFiltersPanel = (
             (q.location != null && q.location.trim() !== '') ||
             (q.start_date != null && q.start_date !== '') ||
             (q.end_date != null && q.end_date !== '') ||
+            q.available_tickets === true ||
             (q.sort != null && q.sort !== DEFAULT_SORT)
         );
     });
@@ -229,8 +230,10 @@ export const useEventFiltersPanel = (
         start_date,
         end_date,
         location,
+        availableTickets,
         featured,
         sort,
+        currentPerPage,
         applyFilters,
         applyFiltersDebounced,
         resetFilters,
