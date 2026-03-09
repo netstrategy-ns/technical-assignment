@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use App\Models\QueueEntry;
 class Event extends Model
 {
     /** @use HasFactory<\Database\Factories\EventFactory> */
@@ -26,6 +27,8 @@ class Event extends Model
         'image_url',
         'sale_starts_at',
         'available_tickets',
+        'queue_enabled',
+        'queue_config',
     ];
 
     protected $casts = [
@@ -34,6 +37,8 @@ class Event extends Model
         'sale_starts_at' => 'datetime',
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
+        'queue_enabled' => 'boolean',
+        'queue_config' => 'array',
     ];
 
     /**
@@ -79,6 +84,30 @@ class Event extends Model
     public function orderItems(): HasManyThrough
     {
         return $this->hasManyThrough(OrderItem::class, TicketType::class);
+    }
+
+    public function queueEntries(): HasMany
+    {
+        return $this->hasMany(QueueEntry::class);
+    }
+
+    public function isQueueEnabled(): bool
+    {
+        return (bool) $this->queue_enabled;
+    }
+
+    public function getQueueMaxConcurrent(): int
+    {
+        $queueConfig = is_array($this->queue_config) ? $this->queue_config : [];
+
+        return max(1, (int) ($queueConfig['max_concurrent'] ?? 1));
+    }
+
+    public function getQueueDurationMinutes(): int
+    {
+        $queueConfig = is_array($this->queue_config) ? $this->queue_config : [];
+
+        return max(1, (int) ($queueConfig['duration_minutes'] ?? 15));
     }
 
     /**
