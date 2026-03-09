@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCart, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
+import { useFormatData } from '@/composables/useFormatData';
 
 const page = usePage();
 const cartUrl = computed(() => (page.props.urls as Record<string, string>)?.cart ?? '/cart');
@@ -19,23 +20,22 @@ useCartExpirationAutoRefresh();
 const maxReachedMessages = ref<Record<number, boolean>>({});
 const actionErrors = ref<Record<number, string>>({});
 const loadingHolds = ref<Record<number, boolean>>({});
+const { formatPrice } = useFormatData();
 
 const hasCartItems = computed(() => totalItems.value > 0);
 const badgeLabel = computed(() =>
     totalItems.value > 99 ? '99+' : String(totalItems.value),
 );
-const totalAmountFormatted = computed(() =>
-    formatPrice(totalAmount.value),
-);
+const totalAmountFormatted = computed(() => formatPrice(totalAmount.value));
 
-function refreshCartPayload(): void {
+const refreshCartPayload = (): void => {
     router.visit(window.location.href, {
         preserveScroll: true,
         preserveState: true,
         replace: true,
         only: ['cart'],
     });
-}
+};
 
 useCartHoldExpiredEvent(refreshCartPayload);
 const itemsByEvent = computed(() => {
@@ -93,26 +93,19 @@ const itemsByEvent = computed(() => {
     return Array.from(byEvent.values());
 });
 
-function formatPrice(value: number): string {
-    return new Intl.NumberFormat('it-IT', {
-        style: 'currency',
-        currency: 'EUR',
-    }).format(value);
-}
-
-function maxQuantityForHold(availableQuantity: number, maxPerUser: number | null): number {
+const maxQuantityForHold = (availableQuantity: number, maxPerUser: number | null): number => {
     if (maxPerUser != null && maxPerUser > 0) {
         return Math.min(availableQuantity, maxPerUser);
     }
 
     return availableQuantity;
-}
+};
 
-function hasReachedUserLimit(quantity: number, maxPerUser: number | null): boolean {
+const hasReachedUserLimit = (quantity: number, maxPerUser: number | null): boolean => {
     return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
-}
+};
 
-function decrementQuantity(holdId: number, quantity: number) {
+const decrementQuantity = (holdId: number, quantity: number): void => {
     if (loadingHolds.value[holdId]) {
         return;
     }
@@ -139,14 +132,14 @@ function decrementQuantity(holdId: number, quantity: number) {
             loadingHolds.value[holdId] = false;
         },
     });
-}
+};
 
-function incrementQuantity(
+const incrementQuantity = (
     holdId: number,
     quantity: number,
     availableQuantity: number,
     maxPerUser: number | null,
-) {
+): void => {
     if (loadingHolds.value[holdId]) {
         return;
     }
@@ -170,7 +163,7 @@ function incrementQuantity(
             loadingHolds.value[holdId] = false;
         },
     });
-}
+};
 </script>
 
 <template>

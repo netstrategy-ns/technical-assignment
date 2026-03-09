@@ -1,0 +1,67 @@
+<script setup lang="ts">
+import { Head, Link } from '@inertiajs/vue3';
+import { useFormatData } from '@/composables/useFormatData';
+import FrontendLayout from '@/layouts/FrontendLayout.vue';
+
+defineProps<{
+    orders: Array<{
+        id: number;
+        public_id: string | null;
+        status: string;
+        total_amount: string | number;
+        created_at: string | null;
+    }>;
+    totalOrders: number;
+}>();
+
+const { formatPrice, statusLabel, formatDate } = useFormatData();
+</script>
+
+<template>
+    <FrontendLayout>
+        <Head title="I miei ordini" />
+        <div class="w-full px-4 py-8">
+            <div class="mx-auto max-w-4xl">
+                <h1 class="text-2xl font-semibold">I miei ordini</h1>
+                <p class="mt-2 text-sm text-muted-foreground">
+                    Totale ordini: {{ totalOrders }}
+                </p>
+
+                <p v-if="orders.length === 0" class="mt-8 rounded-xl border border-sidebar-border/70 bg-card p-8 text-center text-muted-foreground">
+                    Nessun ordine presente.
+                </p>
+
+                <ul v-else class="mt-6 space-y-4">
+                    <li
+                        v-for="order in orders"
+                        :key="order.public_id ?? order.id"
+                        class="rounded-xl border border-sidebar-border/70 bg-card p-4 sm:p-5"
+                    >
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-muted-foreground">Ordine</p>
+                                <p class="font-medium">{{ order.public_id ?? `#${order.id}` }}</p>
+                            </div>
+                            <p class="text-lg font-semibold">{{ formatPrice(order.total_amount) }}</p>
+                        </div>
+                        <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                            <span class="rounded-full border border-sidebar-border/70 px-3 py-1">
+                                Stato: {{ statusLabel(order.status) }}
+                            </span>
+                            <span>Data: {{ formatDate(order.created_at) }}</span>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <Link
+                                v-if="order.public_id"
+                                :href="`/orders/${order.public_id}`"
+                                class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 text-sm"
+                            >
+                                Vedi dettaglio ordine
+                            </Link>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </FrontendLayout>
+</template>

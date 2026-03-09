@@ -4,6 +4,7 @@ import { Minus, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart, useCartAutoRefresh, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
+import { useFormatData } from '@/composables/useFormatData';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
 
 const page = usePage();
@@ -19,8 +20,9 @@ const actionErrors = ref<Record<number, string>>({});
 const loadingHolds = ref<Record<number, boolean>>({});
 const now = ref(Date.now());
 let expirationTickerId: number | null = null;
+const { formatPrice } = useFormatData();
 
-function parseRemainingSeconds(expiresAt: string | null): number {
+const parseRemainingSeconds = (expiresAt: string | null): number => {
     if (!expiresAt) {
         return 0;
     }
@@ -31,14 +33,14 @@ function parseRemainingSeconds(expiresAt: string | null): number {
     }
 
     return Math.max(0, Math.floor((expiresAtMs - now.value) / 1000));
-}
+};
 
-function formatRemainingTime(totalSeconds: number): string {
+const formatRemainingTime = (totalSeconds: number): string => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
+};
 
 onMounted(() => {
     expirationTickerId = window.setInterval(() => {
@@ -107,26 +109,19 @@ const itemsByEvent = computed(() => {
     return Array.from(byEvent.values());
 });
 
-function formatPrice(value: number): string {
-    return new Intl.NumberFormat('it-IT', {
-        style: 'currency',
-        currency: 'EUR',
-    }).format(value);
-}
-
-function maxQuantityForHold(availableQuantity: number, maxPerUser: number | null): number {
+const maxQuantityForHold = (availableQuantity: number, maxPerUser: number | null): number => {
     if (maxPerUser != null && maxPerUser > 0) {
         return Math.min(availableQuantity, maxPerUser);
     }
 
     return availableQuantity;
-}
+};
 
-function hasReachedUserLimit(quantity: number, maxPerUser: number | null): boolean {
+const hasReachedUserLimit = (quantity: number, maxPerUser: number | null): boolean => {
     return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
-}
+};
 
-function decrementQuantity(holdId: number, quantity: number, isExpired: boolean) {
+const decrementQuantity = (holdId: number, quantity: number, isExpired: boolean) => {
     if (loadingHolds.value[holdId] || isExpired) {
         return;
     }
@@ -153,15 +148,15 @@ function decrementQuantity(holdId: number, quantity: number, isExpired: boolean)
             loadingHolds.value[holdId] = false;
         },
     });
-}
+};
 
-function incrementQuantity(
+const incrementQuantity = (
     holdId: number,
     quantity: number,
     availableQuantity: number,
     maxPerUser: number | null,
     isExpired: boolean,
-) {
+): void => {
     if (loadingHolds.value[holdId] || isExpired) {
         return;
     }
@@ -185,7 +180,7 @@ function incrementQuantity(
             loadingHolds.value[holdId] = false;
         },
     });
-}
+};
 </script>
 
 <template>
@@ -194,7 +189,6 @@ function incrementQuantity(
         <div class="w-full px-4 py-8">
             <div class="mx-auto max-w-3xl">
                 <h1 class="text-2xl font-semibold">Carrello</h1>
-
                 <div v-if="isEmpty" class="mt-8 rounded-xl border border-sidebar-border/70 bg-card p-8 text-center text-muted-foreground">
                     <p>Il carrello è vuoto.</p>
                     <Link
