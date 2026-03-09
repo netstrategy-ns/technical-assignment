@@ -9,10 +9,13 @@ import type { EventCardEvent, EventFiltersState } from '@/composables/useEvents'
 import type { PerPageOption } from '@/composables/usePagination';
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS, usePagination } from '@/composables/usePagination';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 const eventsIndex = computed(() => urls.value.eventsIndex ?? '/events');
+const { storeCurrent } = useAuthRedirect();
+storeCurrent('login');
 
 const props = defineProps<{
     events: {

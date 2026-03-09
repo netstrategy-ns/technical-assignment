@@ -6,12 +6,25 @@ import AppLogo from '@/components/AppLogo.vue';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import CartDropdown from '../CartDropdown.vue';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 const eventsIndex = computed(() => urls.value.eventsIndex ?? '/events');
 const canRegister = computed(() => (page.props.canRegister as boolean) ?? true);
 const user = computed(() => (page.props.auth as { user?: unknown })?.user);
+const ordersIndex = computed(() => urls.value.orders ?? '/orders');
+const adminDashboard = computed(() => (urls.value as Record<string, string>).adminDashboard ?? '/admin/dashboard');
+const canAccessAdmin = computed(() => Boolean((page.props.auth as { canAccessAdmin?: boolean })?.canAccessAdmin));
+const { storeCurrent } = useAuthRedirect();
+
+const setLoginRedirect = (): void => {
+    storeCurrent('login');
+};
+
+const setRegisterRedirect = (): void => {
+    storeCurrent('register');
+};
 
 const navLinkClass =
     'block rounded-md px-3 py-2 text-base text-muted-foreground transition-colors hover:bg-accent hover:text-foreground';
@@ -38,11 +51,18 @@ const navLinkClass =
                     <Link :href="eventsIndex" :class="navLinkClass">Eventi</Link>
                     <Link v-if="user" :href="urls.cart ?? '/cart'" :class="navLinkClass">Carrello</Link>
                     <template v-if="user">
-                        <Link href="/dashboard" :class="navLinkClass">Dashboard</Link>
+                        <Link :href="ordersIndex" :class="navLinkClass">I miei ordini</Link>
+                        <Link
+                            v-if="canAccessAdmin"
+                            :href="adminDashboard"
+                            :class="navLinkClass"
+                        >
+                            Dashboard
+                        </Link>
                     </template>
                     <template v-else>
-                        <Link href="/login" :class="navLinkClass">Accedi</Link>
-                        <Link v-if="canRegister" href="/register" :class="navLinkClass">Registrati</Link>
+                        <Link href="/login" :class="navLinkClass" @click="setLoginRedirect">Accedi</Link>
+                        <Link v-if="canRegister" href="/register" :class="navLinkClass" @click="setRegisterRedirect">Registrati</Link>
                     </template>
                 </nav>
             </SheetContent>

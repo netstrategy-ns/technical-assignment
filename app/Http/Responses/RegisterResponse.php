@@ -3,11 +3,10 @@
 namespace App\Http\Responses;
 
 use Illuminate\Http\Request;
-use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
-use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Symfony\Component\HttpFoundation\Response;
 
-class LoginResponse implements LoginResponseContract
+class RegisterResponse implements RegisterResponseContract
 {
     /**
      * @param  Request  $request
@@ -15,20 +14,12 @@ class LoginResponse implements LoginResponseContract
      */
     public function toResponse($request)
     {
-        if ($request->wantsJson()) {
-            return response()->json(['two_factor' => false]);
-        }
-
-        if ($request->user()?->isAdmin()) {
-            return redirect()->to(Route::has('admin.dashboard') ? route('admin.dashboard') : '/admin/dashboard');
-        }
-
         $requestedRedirect = $this->resolveRequestedRedirect($request);
         if ($requestedRedirect !== null) {
             return redirect()->to($requestedRedirect);
         }
 
-        return redirect()->intended(route('home'));
+        return redirect()->to(route('home'));
     }
 
     private function resolveRequestedRedirect(Request $request): ?string
@@ -79,3 +70,4 @@ class LoginResponse implements LoginResponseContract
         return $query === '' ? $path : $path . '?' . $query;
     }
 }
+

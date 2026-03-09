@@ -9,6 +9,7 @@ import {
 import type { QueueEvent, QueueStatus } from "@/composables/useEventQueue";
 import { useEventQueue } from "@/composables/useEventQueue";
 import FrontendLayout from "@/layouts/FrontendLayout.vue";
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 type ShowEvent = QueueEvent;
 
@@ -22,6 +23,8 @@ const page = usePage();
 const isAuthenticated = computed(() =>
   Boolean((page.props.auth as { user?: unknown })?.user)
 );
+const { storeCurrent } = useAuthRedirect();
+storeCurrent('login');
 
 const eventData = ref<ShowEvent>(props.event);
 const currentEvent = computed(() => eventData.value);

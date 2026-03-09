@@ -4,6 +4,7 @@ import { Minus, Plus, ShoppingCart } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/composables/useCart';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 type QueueStatus = {
     is_queue_enabled: boolean;
@@ -141,6 +142,16 @@ const hasReachedUserLimit = (ticketId: number, maxPerUser: number | null): boole
     }
 
     return getHeldQuantity(ticketId) >= maxPerUser;
+};
+
+const { storeCurrent } = useAuthRedirect();
+
+const storeAuthRedirectForLogin = (): void => {
+    storeCurrent('login');
+};
+
+const storeAuthRedirectForRegister = (): void => {
+    storeCurrent('register');
 };
 
 const addToCart = (
@@ -294,8 +305,22 @@ const queueBlockMessage = computed(() => {
                                 </p>
                             </div>
                             <span v-else class="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Link href="/login" class="bg-muted-foreground text-muted rounded-md px-2 py-1">Accedi</Link>
-                                <template v-if="canRegister"><Link href="/register" class="bg-primary text-primary-foreground rounded-md px-2 py-1">Registrati</Link></template>
+                                <Link
+                                    href="/login"
+                                    class="bg-muted-foreground text-muted rounded-md px-2 py-1"
+                                    @click="storeAuthRedirectForLogin"
+                                >
+                                    Accedi
+                                </Link>
+                                <template v-if="canRegister">
+                                    <Link
+                                        href="/register"
+                                        class="bg-primary text-primary-foreground rounded-md px-2 py-1"
+                                        @click="storeAuthRedirectForRegister"
+                                    >
+                                        Registrati
+                                    </Link>
+                                </template>
                             </span>
                         </template>
                     </li>

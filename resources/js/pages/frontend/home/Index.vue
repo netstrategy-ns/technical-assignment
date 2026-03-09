@@ -4,9 +4,12 @@ import { computed } from 'vue';
 import CategoryEventsSlider from '@/components/custom/Sliders/CategoryEventsSlider.vue';
 import HeroEventsSlider from '@/components/custom/Sliders/HeroEventsSlider.vue';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
+const { storeCurrent } = useAuthRedirect();
+storeCurrent('login');
 
 const eventsIndex = computed(() => urls.value.eventsIndex ?? '/events');
 

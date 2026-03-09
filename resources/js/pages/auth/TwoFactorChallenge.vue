@@ -12,6 +12,7 @@ import {
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import type { TwoFactorConfigContent } from '@/types';
 import { store } from '@/routes/two-factor/login';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 const authConfigContent = computed<TwoFactorConfigContent>(() => {
     if (showRecoveryInput.value) {
@@ -32,6 +33,8 @@ const authConfigContent = computed<TwoFactorConfigContent>(() => {
 });
 
 const showRecoveryInput = ref<boolean>(false);
+const { get } = useAuthRedirect();
+const authRedirect = get('login');
 
 const toggleRecoveryMode = (clearErrors: () => void): void => {
     showRecoveryInput.value = !showRecoveryInput.value;
@@ -58,6 +61,7 @@ const code = ref<string>('');
                     @error="code = ''"
                     #default="{ errors, processing, clearErrors }"
                 >
+                    <input type="hidden" name="auth_redirect" :value="authRedirect ?? ''" />
                     <input type="hidden" name="code" :value="code" />
                     <div
                         class="flex flex-col items-center justify-center space-y-3 text-center"
@@ -104,6 +108,7 @@ const code = ref<string>('');
                     reset-on-error
                     #default="{ errors, processing, clearErrors }"
                 >
+                    <input type="hidden" name="auth_redirect" :value="authRedirect ?? ''" />
                     <Input
                         name="recovery_code"
                         type="text"
