@@ -19,9 +19,15 @@ class OrderItemPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, OrderItem $orderItem): bool
+    public function view(User $user, OrderItem $orderItem): bool|Response
     {
-        return false;
+        $orderItem->loadMissing('order');
+
+        if ((int) $orderItem->order?->user_id === $user->id) {
+            return Response::allow();
+        }
+
+        return Response::denyAsNotFound('Order item non trovato.');
     }
 
     /**

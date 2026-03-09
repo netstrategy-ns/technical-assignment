@@ -4,10 +4,14 @@ namespace App\Providers;
 
 use App\Models\TicketTypeQuota;
 use App\Models\Event;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\User;
 use App\Observers\TicketTypeQuotaObserver;
 use App\Observers\EventObserver;
 use App\Observers\UserObserver;
+use App\Policies\OrderItemPolicy;
+use App\Policies\OrderPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
 
         Gate::define('admin', fn (User $user): bool => $user->isAdmin());
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(OrderItem::class, OrderItemPolicy::class);
 
         $this->configureDefaults();
     }

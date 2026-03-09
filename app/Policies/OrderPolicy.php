@@ -19,9 +19,13 @@ class OrderPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Order $order): bool
+    public function view(User $user, Order $order): bool|Response
     {
-        return false;
+        if ($user->id === $order->user_id) {
+            return Response::allow();
+        }
+
+        return Response::denyAsNotFound('Order non trovato.');
     }
 
     /**
