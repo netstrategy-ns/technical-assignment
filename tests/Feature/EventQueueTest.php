@@ -16,6 +16,7 @@ use App\Models\TicketTypeQuota;
 use App\Models\User;
 use App\Models\VenueType;
 use App\Services\QueueService;
+use Inertia\Testing\AssertableInertia as Assert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use function Pest\Laravel\actingAs;
@@ -86,8 +87,23 @@ function createQueueTicketForTest(array $eventOverrides = [], array $ticketOverr
 function assertQueueEntryEnabledForUser(Event $event, User $user): void
 {
     actingAs($user);
-    $queueStatus = get("/events/{$event->id}/queue/status")->json('queue_status');
+    $queueStatus = get("/events/{$event->id}/queue/status")->inertiaProps('queueStatus');
     expect($queueStatus['status'])->toBe(QueueEntryStatus::ENABLED->value);
+}
+
+function getQueueStatusFromPage(Event $event): array
+{
+    return get("/events/{$event->id}/queue/status")->inertiaProps('queueStatus');
+}
+
+function getQueueEventFromPage(Event $event): array
+{
+    return get("/events/{$event->id}/queue/status")->inertiaProps('event');
+}
+
+function joinEventQueue(Event $event): void
+{
+    post("/events/{$event->id}/queue/join")->assertRedirect("/events/{$event->slug}");
 }
 
 describe('Coda eventi', function (): void {
@@ -97,8 +113,12 @@ describe('Coda eventi', function (): void {
 
         actingAs($user);
 
-        $response = post("/events/{$event->id}/queue/join")->assertOk();
-        $response->assertJsonPath('queue_status.status', QueueEntryStatus::ENABLED->value);
+        joinEventQueue($event);
+        $statusResponse = get("/events/{$event->id}/queue/status");
+        $statusResponse->assertOk();
+        $statusResponse->assertInertia(fn (Assert $page) => $page
+            ->where('queueStatus.status', QueueEntryStatus::ENABLED->value)
+        );
 
         $entry = QueueEntry::query()
             ->where('user_id', $user->id)
@@ -127,21 +147,21 @@ describe('Coda eventi', function (): void {
         $fourthUser = User::factory()->create();
 
         actingAs($firstUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         actingAs($secondUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         actingAs($thirdUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
-        $thirdStatus = get("/events/{$event->id}/queue/status")->json('queue_status');
+        joinEventQueue($event);
+        $thirdStatus = getQueueStatusFromPage($event);
         expect((string) $thirdStatus['status'])->toBe(QueueEntryStatus::WAITING->value);
         expect((int) $thirdStatus['position'])->toBe(1);
         expect((int) $thirdStatus['estimated_wait_seconds'])->toBe(600);
 
         actingAs($fourthUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
-        $fourthStatus = get("/events/{$event->id}/queue/status")->json('queue_status');
+        joinEventQueue($event);
+        $fourthStatus = getQueueStatusFromPage($event);
         expect((string) $fourthStatus['status'])->toBe(QueueEntryStatus::WAITING->value);
         expect((int) $fourthStatus['position'])->toBe(2);
         expect((int) $fourthStatus['estimated_wait_seconds'])->toBe(600);
@@ -166,10 +186,10 @@ describe('Coda eventi', function (): void {
             $fourthUser = User::factory()->create();
 
             actingAs($firstUser);
-            post("/events/{$event->id}/queue/join")->assertOk();
+            joinEventQueue($event);
 
             actingAs($secondUser);
-            post("/events/{$event->id}/queue/join")->assertOk();
+            joinEventQueue($event);
 
             $firstEntry = QueueEntry::query()
                 ->where('user_id', $firstUser->id)
@@ -193,15 +213,15 @@ describe('Coda eventi', function (): void {
             ]);
 
             actingAs($thirdUser);
-            post("/events/{$event->id}/queue/join")->assertOk();
-            $thirdStatus = get("/events/{$event->id}/queue/status")->json('queue_status');
+            joinEventQueue($event);
+            $thirdStatus = getQueueStatusFromPage($event);
             expect((string) $thirdStatus['status'])->toBe(QueueEntryStatus::WAITING->value);
             expect((int) $thirdStatus['position'])->toBe(1);
             expect((int) $thirdStatus['estimated_wait_seconds'])->toBe(60);
 
             actingAs($fourthUser);
-            post("/events/{$event->id}/queue/join")->assertOk();
-            $fourthStatus = get("/events/{$event->id}/queue/status")->json('queue_status');
+            joinEventQueue($event);
+            $fourthStatus = getQueueStatusFromPage($event);
             expect((string) $fourthStatus['status'])->toBe(QueueEntryStatus::WAITING->value);
             expect((int) $fourthStatus['position'])->toBe(2);
             expect((int) $fourthStatus['estimated_wait_seconds'])->toBe(660);
@@ -216,10 +236,10 @@ describe('Coda eventi', function (): void {
         ['ticket' => $ticket, 'event' => $event] = createQueueTicketForTest();
 
         actingAs($eventUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         actingAs($waitingUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         $response = from("/events/{$event->slug}")->post('/cart/hold', [
             'ticket_id' => $ticket->id,
             'quantity' => 1,
@@ -237,7 +257,7 @@ describe('Coda eventi', function (): void {
         ['ticket' => $ticket, 'event' => $event] = createQueueTicketForTest();
 
         actingAs($user);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         assertQueueEntryEnabledForUser($event, $user);
         from("/events/{$event->slug}")->post('/cart/hold', [
             'ticket_id' => $ticket->id,
@@ -269,7 +289,7 @@ describe('Coda eventi', function (): void {
         ]);
 
         actingAs($user);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         assertQueueEntryEnabledForUser($event, $user);
         from("/events/{$event->slug}")->post('/cart/hold', [
             'ticket_id' => $firstTicket->id,
@@ -302,14 +322,16 @@ describe('Coda eventi', function (): void {
         ['event' => $event] = createQueueTicketForTest();
 
         actingAs($firstUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         actingAs($secondUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         $response = get("/events/{$event->id}/queue/status");
 
-        $response->assertOk()->assertJsonPath('queue_status.status', QueueEntryStatus::WAITING->value);
-        $response->assertJsonPath('queue_status.position', 1);
+        $response->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('queueStatus.status', QueueEntryStatus::WAITING->value)
+            ->where('queueStatus.position', 1)
+        );
     });
 
     test('GET /events/{id}/queue/status ritorna anche i dati aggiornati dell\'evento', function (): void {
@@ -318,7 +340,7 @@ describe('Coda eventi', function (): void {
         ['ticket' => $ticket, 'event' => $event] = createQueueTicketForTest();
 
         actingAs($holdUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         assertQueueEntryEnabledForUser($event, $holdUser);
         from("/events/{$event->slug}")->post('/cart/hold', [
             'ticket_id' => $ticket->id,
@@ -328,7 +350,7 @@ describe('Coda eventi', function (): void {
         $hold = Hold::query()->where('user_id', $holdUser->id)->latest('id')->firstOrFail();
 
         actingAs($viewerUser);
-        $before = get("/events/{$event->id}/queue/status")->json('event');
+        $before = getQueueEventFromPage($event);
         expect($before['id'])->toBe($event->id);
         expect($before['ticket_types'][0]['tickets'][0]['available_quantity'])->toBe(49);
 
@@ -336,7 +358,7 @@ describe('Coda eventi', function (): void {
         from('/cart')->delete("/cart/hold/{$hold->id}")->assertRedirect('/cart');
 
         actingAs($viewerUser);
-        $after = get("/events/{$event->id}/queue/status")->json('event');
+        $after = getQueueEventFromPage($event);
         expect($after['ticket_types'][0]['tickets'][0]['available_quantity'])->toBe(50);
     });
 
@@ -347,13 +369,13 @@ describe('Coda eventi', function (): void {
         ['event' => $event] = createQueueTicketForTest(queueConfig: ['max_concurrent' => 1]);
 
         actingAs($firstUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         actingAs($secondUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         actingAs($thirdUser);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
 
         $firstEntry = QueueEntry::query()
             ->where('user_id', $firstUser->id)
@@ -382,7 +404,7 @@ describe('Coda eventi', function (): void {
         ['ticket' => $ticket, 'event' => $event] = createQueueTicketForTest();
 
         actingAs($user);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         assertQueueEntryEnabledForUser($event, $user);
         from("/events/{$event->slug}")->post('/cart/hold', [
             'ticket_id' => $ticket->id,
@@ -406,7 +428,9 @@ describe('Coda eventi', function (): void {
 
         $statusResponse = get("/events/{$event->id}/queue/status");
         $statusResponse->assertOk();
-        $statusResponse->assertJsonPath('queue_status.status', null);
+        $statusResponse->assertInertia(fn (Assert $page) => $page
+            ->where('queueStatus.status', null)
+        );
     });
 
     test('checkout con slot scaduto rifiuta la richiesta', function (): void {
@@ -414,7 +438,7 @@ describe('Coda eventi', function (): void {
         ['ticket' => $ticket, 'event' => $event] = createQueueTicketForTest();
 
         actingAs($user);
-        post("/events/{$event->id}/queue/join")->assertOk();
+        joinEventQueue($event);
         assertQueueEntryEnabledForUser($event, $user);
         from("/events/{$event->slug}")->post('/cart/hold', [
             'ticket_id' => $ticket->id,

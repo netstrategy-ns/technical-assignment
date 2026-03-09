@@ -6,32 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Events\EventShowResource;
 use App\Models\Event;
 use App\Services\QueueService;
-use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 
 class EventQueueController extends Controller
 {
-    public function join(Request $request, int $eventId, QueueService $queueService): JsonResponse
+    public function join(Request $request, int $eventId, QueueService $queueService): RedirectResponse
     {
         $event = Event::query()->findOrFail($eventId);
 
         if (! $event->isQueueEnabled()) {
-            return response()->json(['message' => 'Questo evento non utilizza la coda.'], 409);
+            return back()->withErrors([
+                'queue' => 'Questo evento non utilizza la coda.',
+            ]);
         }
 
-        $entry = $queueService->joinQueue($event, $request->user());
-        $status = $queueService->getQueueStatus($request->user(), $event);
+        $queueService->joinQueue($event, $request->user());
 
-        return response()->json([
-            'queue_status' => $status,
-            'entry' => [
-                'id' => $entry->id,
-                'status' => $entry->status->value,
-            ],
-        ]);
+        return redirect()->route('events.show', ['event' => $event->slug]);
     }
 
-    public function status(Request $request, int $eventId, QueueService $queueService): JsonResponse
+    public function status(Request $request, int $eventId, QueueService $queueService): Response
     {
         $event = Event::query()
             ->with([
@@ -44,9 +41,10 @@ class EventQueueController extends Controller
         $status = $queueService->getQueueStatus($request->user(), $event);
         $eventResource = new EventShowResource($event);
 
-        return response()->json([
-            'queue_status' => $status,
+        return Inertia::render('frontend/events/Show', [
             'event' => $eventResource->resolve($request),
+            'saleNotStarted' => $event->isSaleNotStarted(),
+            'queueStatus' => $status,
         ]);
     }
 }
