@@ -25,6 +25,8 @@ class EventShowResource extends JsonResource
             'starts_at' => $this->starts_at?->toIso8601String(),
             'ends_at' => $this->ends_at?->toIso8601String(),
             'sale_starts_at' => $this->sale_starts_at?->toIso8601String(),
+            'queue_enabled' => (bool) $this->queue_enabled,
+            'queue_config' => $this->queue_config,
             'category' => $this->category ? ['id' => $this->category->id, 'name' => $this->category->name] : null,
             'venueType' => $this->venueType ? ['id' => $this->venueType->id, 'name' => $this->venueType->name] : null,
             'ticket_types' => $this->whenLoaded(

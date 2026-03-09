@@ -107,7 +107,7 @@ class Event extends Model
     {
         $queueConfig = is_array($this->queue_config) ? $this->queue_config : [];
 
-        return max(1, (int) ($queueConfig['duration_minutes'] ?? 15));
+        return max(1, (int) ($queueConfig['duration_minutes'] ?? 10));
     }
 
     /**

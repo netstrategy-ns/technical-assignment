@@ -8,12 +8,18 @@ use App\Models\Hold;
 use App\Models\Order;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\QueueService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutService
 {
+    public function __construct(
+        private readonly QueueService $queueService,
+    ) {
+    }
+
     /**
      * @param array<int, int> $holdIds
      */
@@ -31,6 +37,7 @@ class CheckoutService
             }
 
             $this->validateHoldsAreCurrent($holds, $normalizedHoldIds);
+            $this->queueService->assertCheckoutAllowed($user, $holds);
 
             $ticketIds = $holds->pluck('ticket_id')->unique()->values()->all();
             $tickets = Ticket::query()
@@ -69,6 +76,14 @@ class CheckoutService
                 ]);
             }
 
+            $eventIds = $holds
+                ->map(static fn (Hold $hold): ?int => $hold->ticket?->ticketType?->event_id)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $this->queueService->markEntriesCompleted($user, $eventIds);
+
             return $order;
         });
     }
@@ -94,6 +109,7 @@ class CheckoutService
         if ($holdIds === []) {
             return Hold::query()
                 ->with('ticket')
+                ->with('ticket.ticketType.event')
                 ->where('user_id', $user->id)
                 ->active()
                 ->valid()
@@ -104,7 +120,7 @@ class CheckoutService
 
         $requestedHolds = Hold::query()
             ->where('user_id', $user->id)
-            ->with('ticket')
+            ->with('ticket.ticketType.event')
             ->whereIn('id', $holdIds)
             ->orderBy('id')
             ->lockForUpdate()

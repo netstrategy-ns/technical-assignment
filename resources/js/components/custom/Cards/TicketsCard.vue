@@ -5,6 +5,16 @@ import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/composables/useCart';
 
+type QueueStatus = {
+    is_queue_enabled: boolean;
+    status: 'waiting' | 'enabled' | 'expired' | 'completed' | null;
+    position: number | null;
+    estimated_wait_seconds: number | null;
+    entered_at: string | null;
+    enabled_at: string | null;
+    enabled_until: string | null;
+};
+
 const page = usePage();
 const user = computed(() => (page.props.auth as { user?: unknown })?.user);
 const canRegister = computed(() => (page.props.canRegister as boolean) ?? true);
@@ -15,11 +25,12 @@ const maxReachedMessages = ref<Record<number, boolean>>({});
 const actionErrors = ref<Record<number, string>>({});
 const loadingTickets = ref<Record<number, boolean>>({});
 
-defineProps<{
+const props = defineProps<{
     event: {
         id: number;
         slug: string;
         title: string;
+        queue_enabled?: boolean;
         ticket_types: Array<{
             id: number;
             name: string;
@@ -35,7 +46,12 @@ defineProps<{
         }>;
     };
     saleNotStarted: boolean;
+    queueStatus: QueueStatus | null;
+    onCartUpdated?: () => void | Promise<void>;
 }>();
+
+const isQueueEnabledForEvent = computed(() => Boolean(props.event.queue_enabled));
+const isQueueBlockingActions = computed(() => isQueueEnabledForEvent.value && props.queueStatus?.status !== 'enabled');
 
 const maxQuantityForTicket = (
     availableForTicket: number,
@@ -141,6 +157,11 @@ const addToCart = (
         return;
     }
 
+    if (isQueueBlockingActions.value) {
+        actionErrors.value[ticketId] = 'Entra in coda e attendi l\'abilitazione per acquistare questo evento.';
+        return;
+    }
+
     const maxQty = maxQuantityForTicket(availableForTicket, maxPerUser, getHeldQuantity(ticketId));
     const qty = Math.min(maxQty, Math.max(1, getSelectedQuantity(ticketId)));
 
@@ -156,6 +177,7 @@ const addToCart = (
         onSuccess: () => {
             quantities.value[ticketId] = 1;
             hideMaxReachedMessage(ticketId);
+            void props.onCartUpdated?.();
         },
         onError: (errors) => {
             actionErrors.value[ticketId] = errors.quantity ?? errors.ticket_id ?? 'Impossibile aggiungere il biglietto al carrello.';
@@ -165,6 +187,22 @@ const addToCart = (
         },
     });
 };
+
+const queueBlockMessage = computed(() => {
+    if (!isQueueBlockingActions.value || props.queueStatus === null) {
+        return '';
+    }
+
+    if (props.queueStatus.status === 'waiting') {
+        return `In coda: posizione ${props.queueStatus.position ?? '-'} (attesa stimata ${props.queueStatus.estimated_wait_seconds ?? 0}s).`;
+    }
+
+    if (props.queueStatus.status === 'expired') {
+        return 'Il tuo slot è scaduto. Entra di nuovo in coda.';
+    }
+
+    return `Stato coda: ${props.queueStatus.status}.`;
+});
 </script>
 
 <template>
@@ -229,13 +267,19 @@ const addToCart = (
                                     <Button
                                         size="sm"
                                         variant="secondary"
-                                        :disabled="isCartAtMax(ticket.id, ticket.max_per_user)"
+                                        :disabled="isCartAtMax(ticket.id, ticket.max_per_user) || isQueueBlockingActions"
                                         @click="addToCart(ticket.id, ticket.available_quantity, ticket.max_per_user)"
                                     >
                                         <ShoppingCart class="size-4" />
                                         {{ loadingTickets[ticket.id] ? 'Aggiunta...' : 'Aggiungi al carrello' }}
                                     </Button>
                                 </div>
+                                <p
+                                    v-if="isQueueBlockingActions"
+                                    class="mt-2 text-right text-xs text-blue-600 dark:text-blue-300"
+                                >
+                                    {{ queueBlockMessage }}
+                                </p>
                                 <p
                                     v-if="maxReachedMessages[ticket.id]"
                                     class="mt-2 text-right text-xs text-amber-600 dark:text-amber-400"

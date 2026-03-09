@@ -60,6 +60,12 @@ class EventSeeder extends Seeder
                 ? random_int(15_000, 75_000)
                 : random_int(500, 5_000);
 
+            $isQueueEnabled = $i === 0;
+            $queueConfig = $isQueueEnabled ? [
+                'max_concurrent' => random_int(1, 3),
+                'duration_minutes' => 10,
+            ] : null;
+
             Event::factory()->create([
                 'title' => $title,
                 'description' => fake()->paragraph(6),
@@ -68,6 +74,8 @@ class EventSeeder extends Seeder
                 'venue_type_id' => $venueType->id,
                 'is_featured' => $i < 2,
                 'is_active' => true,
+                'queue_enabled' => $isQueueEnabled,
+                'queue_config' => $queueConfig,
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
                 'sale_starts_at' => $saleStartsAt,

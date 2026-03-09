@@ -6,6 +6,8 @@ use App\Models\Event;
 use App\Models\EventCategory;
 use App\Http\Requests\Events\EventIndexRequest;
 use App\Http\Resources\Events\EventShowResource;
+use App\Services\QueueService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,7 +46,7 @@ class EventController extends Controller
      * Si passa l'array risolto della Resource così il frontend riceve event.* direttamente
      * (senza wrapper "data" di JsonResource).
      */
-    public function show(Event $event): Response
+    public function show(Event $event, Request $request, QueueService $queueService): Response
     {
         $event->load([
             'category',
@@ -53,9 +55,11 @@ class EventController extends Controller
             'ticketTypes.quota',
         ]);
         $resource = new EventShowResource($event);
+        $queueStatus = $request->user() === null ? null : $queueService->getQueueStatus($request->user(), $event);
         return Inertia::render('frontend/events/Show', [
             'event' => $resource->resolve(request()),
             'saleNotStarted' => $event->isSaleNotStarted(),
+            'queueStatus' => $queueStatus,
         ]);
     }
 

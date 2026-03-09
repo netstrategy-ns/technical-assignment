@@ -6,6 +6,7 @@ use App\Enums\HoldStatusEnum;
 use App\Models\Hold;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\QueueService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +14,11 @@ use Illuminate\Validation\ValidationException;
 class CartHoldService
 {
     public const HOLD_MINUTES = 10;
+
+    public function __construct(
+        private readonly QueueService $queueService,
+    ) {
+    }
 
     public function buildCartPayload(User $user): array
     {
@@ -48,6 +54,7 @@ class CartHoldService
         return DB::transaction(function () use ($user, $ticketId, $quantity): Hold {
             $ticket = $this->findTicket($ticketId);
             $this->validateTicketForHold($ticket);
+            $this->queueService->assertUserCanHold($user, $ticket->ticketType?->event);
 
             $latestHold = Hold::query()
                 ->whereBelongsTo($user)
@@ -78,6 +85,7 @@ class CartHoldService
             ]);
 
             $this->activateHold($hold, $targetQuantity);
+            $this->queueService->refreshEnabledWindowForUserAndEvent($user, $ticket->ticketType?->event);
 
             return $hold->fresh(['ticket.ticketType.event']);
         }, 3);
@@ -109,9 +117,11 @@ class CartHoldService
             }
 
             $ticket = $this->findTicket($lockedHold->ticket_id);
+            $this->queueService->assertUserCanHold($user, $ticket->ticketType?->event);
             $targetQuantity = max(1, $quantity);
             $this->assertQuantityCanBeHeld($ticket, $targetQuantity, $lockedHold->id);
             $this->activateHold($lockedHold, $targetQuantity);
+            $this->queueService->refreshEnabledWindowForUserAndEvent($user, $ticket->ticketType?->event);
 
             return $lockedHold->refresh();
         }, 3);

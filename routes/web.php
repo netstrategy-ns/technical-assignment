@@ -3,6 +3,7 @@
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\CheckoutController;
+use App\Http\Controllers\Frontend\EventQueueController;
 use App\Http\Controllers\Frontend\HoldController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\OrderController;
@@ -17,6 +18,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('events/{eventId}/queue/join', [EventQueueController::class, 'join'])->whereNumber('eventId')->name('events.queue.join');
+    Route::get('events/{eventId}/queue/status', [EventQueueController::class, 'status'])->whereNumber('eventId')->name('events.queue.status');
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::post('cart/hold', [HoldController::class, 'store'])->name('cart.holds.store');
     Route::patch('cart/hold/{hold}', [HoldController::class, 'update'])->name('cart.holds.update');
