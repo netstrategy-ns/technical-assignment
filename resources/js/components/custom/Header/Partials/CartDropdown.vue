@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,14 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCart } from '@/composables/useCart';
+import { useCart, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
 
 const page = usePage();
 const cartUrl = computed(() => (page.props.urls as Record<string, string>)?.cart ?? '/cart');
 const checkoutUrl = computed(() => (page.props.urls as Record<string, string>)?.checkout ?? '/checkout');
 
 const { items, totalItems, totalAmount, isEmpty, remove, update } = useCart();
+useCartExpirationAutoRefresh();
 const maxReachedMessages = ref<Record<number, boolean>>({});
 const actionErrors = ref<Record<number, string>>({});
 const loadingHolds = ref<Record<number, boolean>>({});
@@ -26,6 +27,17 @@ const badgeLabel = computed(() =>
 const totalAmountFormatted = computed(() =>
     formatPrice(totalAmount.value),
 );
+
+function refreshCartPayload(): void {
+    router.visit(window.location.href, {
+        preserveScroll: true,
+        preserveState: true,
+        replace: true,
+        only: ['cart'],
+    });
+}
+
+useCartHoldExpiredEvent(refreshCartPayload);
 const itemsByEvent = computed(() => {
     const byEvent = new Map<
         number,
@@ -226,7 +238,7 @@ function incrementQuantity(
                                             Max per utente: {{ line.maxPerUser }}
                                         </p>
                                         <p v-if="line.expiresAt" class="text-xs text-muted-foreground">
-                                            Prenotazione fino alle
+                                            Prenotazione valida fino alle
                                             {{ new Date(line.expiresAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}
                                         </p>
                                     </div>

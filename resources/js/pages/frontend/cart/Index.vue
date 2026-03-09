@@ -1,19 +1,57 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Minus, Plus, Trash2 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/composables/useCart';
+import { useCart, useCartAutoRefresh, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 const checkoutUrl = computed(() => urls.value.checkout ?? '/checkout');
 
-const { items, totalItems, totalAmount, isEmpty, remove, update } = useCart();
+const { items, totalItems, totalAmount, isEmpty, remove, update, refresh } = useCart();
+useCartAutoRefresh();
+useCartExpirationAutoRefresh();
+useCartHoldExpiredEvent(refresh);
 const maxReachedMessages = ref<Record<number, boolean>>({});
 const actionErrors = ref<Record<number, string>>({});
 const loadingHolds = ref<Record<number, boolean>>({});
+const now = ref(Date.now());
+let expirationTickerId: number | null = null;
+
+function parseRemainingSeconds(expiresAt: string | null): number {
+    if (!expiresAt) {
+        return 0;
+    }
+
+    const expiresAtMs = Date.parse(expiresAt);
+    if (!Number.isFinite(expiresAtMs)) {
+        return 0;
+    }
+
+    return Math.max(0, Math.floor((expiresAtMs - now.value) / 1000));
+}
+
+function formatRemainingTime(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+onMounted(() => {
+    expirationTickerId = window.setInterval(() => {
+        now.value = Date.now();
+    }, 1000);
+});
+
+onUnmounted(() => {
+    if (expirationTickerId !== null) {
+        window.clearInterval(expirationTickerId);
+        expirationTickerId = null;
+    }
+});
 
 const totalAmountFormatted = computed(() => formatPrice(totalAmount.value));
 
@@ -36,10 +74,13 @@ const itemsByEvent = computed(() => {
                 subtotal: number;
                 expiresAt: string | null;
                 availableQuantity: number;
+                remainingSeconds: number;
+                isExpired: boolean;
             }>;
         }
     >();
     for (const item of items.value) {
+        const remainingSeconds = parseRemainingSeconds(item.expires_at);
         let group = byEvent.get(item.event.id);
         if (!group) {
             group = {
@@ -59,6 +100,8 @@ const itemsByEvent = computed(() => {
             subtotal: priceNum * item.quantity,
             expiresAt: item.expires_at,
             availableQuantity: item.ticket.available_quantity,
+            remainingSeconds,
+            isExpired: remainingSeconds <= 0,
         });
     }
     return Array.from(byEvent.values());
@@ -83,8 +126,8 @@ function hasReachedUserLimit(quantity: number, maxPerUser: number | null): boole
     return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
 }
 
-function decrementQuantity(holdId: number, quantity: number) {
-    if (loadingHolds.value[holdId]) {
+function decrementQuantity(holdId: number, quantity: number, isExpired: boolean) {
+    if (loadingHolds.value[holdId] || isExpired) {
         return;
     }
 
@@ -117,8 +160,9 @@ function incrementQuantity(
     quantity: number,
     availableQuantity: number,
     maxPerUser: number | null,
+    isExpired: boolean,
 ) {
-    if (loadingHolds.value[holdId]) {
+    if (loadingHolds.value[holdId] || isExpired) {
         return;
     }
 
@@ -205,9 +249,15 @@ function incrementQuantity(
                                             >
                                                 Max per utente: {{ line.maxPerUser }}
                                             </p>
-                                            <p v-if="line.expiresAt" class="mt-1 text-xs text-muted-foreground">
-                                                Prenotazione valida fino alle
-                                                {{ new Date(line.expiresAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}
+                                            <p v-if="line.expiresAt" class="mt-1 text-xs" :class="line.isExpired ? 'font-medium text-destructive' : 'text-muted-foreground'">
+                                                <template v-if="line.isExpired">
+                                                    Prenotazione scaduta
+                                                </template>
+                                                <template v-else>
+                                                    Prenotazione valida fino alle
+                                                    {{ new Date(line.expiresAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}
+                                                    (scade tra {{ formatRemainingTime(line.remainingSeconds) }})
+                                                </template>
                                             </p>
                                         </div>
                                         <Button
@@ -228,8 +278,8 @@ function incrementQuantity(
                                                     variant="outline"
                                                     size="icon-sm"
                                                     aria-label="Diminuisci quantità"
-                                                    :disabled="loadingHolds[line.holdId]"
-                                                    @click="decrementQuantity(line.holdId, line.quantity)"
+                                                    :disabled="loadingHolds[line.holdId] || line.isExpired"
+                                                    @click="decrementQuantity(line.holdId, line.quantity, line.isExpired)"
                                                 >
                                                     <Minus class="size-4" />
                                                 </Button>
@@ -240,8 +290,8 @@ function incrementQuantity(
                                                     variant="outline"
                                                     size="icon-sm"
                                                     aria-label="Aumenta quantità"
-                                                    :disabled="loadingHolds[line.holdId] || line.quantity >= maxQuantityForHold(line.availableQuantity, line.maxPerUser)"
-                                                    @click="incrementQuantity(line.holdId, line.quantity, line.availableQuantity, line.maxPerUser)"
+                                                    :disabled="loadingHolds[line.holdId] || line.quantity >= maxQuantityForHold(line.availableQuantity, line.maxPerUser) || line.isExpired"
+                                                    @click="incrementQuantity(line.holdId, line.quantity, line.availableQuantity, line.maxPerUser, line.isExpired)"
                                                 >
                                                     <Plus class="size-4" />
                                                 </Button>

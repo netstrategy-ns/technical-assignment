@@ -28,7 +28,6 @@ defineProps<{
             tickets: Array<{
                 id: number;
                 price: string;
-                quantity_total: number | null;
                 max_per_user: number | null;
                 available_quantity: number;
                 user_hold_quantity: number;
@@ -169,8 +168,7 @@ const addToCart = (
 </script>
 
 <template>
-    <section class="mt-8">
-        <h2 class="mb-4 text-lg font-semibold">Biglietti</h2>
+<section>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div
                 v-for="tt in event.ticket_types"
@@ -178,15 +176,6 @@ const addToCart = (
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4"
             >
                 <h3 class="text-xl font-bold">{{ tt.name }}</h3>
-                <p class="text-sm text-muted-foreground">
-                    <template v-if="tt.quota_quantity > 0">
-                        Disponibili: <strong>{{ tt.available_quantity }}</strong> su <strong>{{ tt.quota_quantity }}</strong>
-                        <template v-if="tt.available_quantity === 0"> (esaurito)</template>
-                    </template>
-                    <template v-else>
-                        Quota non impostata per questa tipologia.
-                    </template>
-                </p>
                 <ul class="mt-2 space-y-3">
                     <li
                         v-for="ticket in tt.tickets"
@@ -197,8 +186,8 @@ const addToCart = (
                             <span class="text-xl font-medium">Prezzo: € {{ ticket.price }}</span>
                             <div class="mt-1 flex w-full items-center justify-between text-xs">
                                 <span>
-                                Disponibili per questa offerta:
-                                <strong>{{ ticket.available_quantity }}</strong>
+                                Disponibili per questo tipo:
+                                <strong>{{ tt.available_quantity }}</strong> / <strong>{{ tt.quota_quantity }}</strong>
                                 </span>
                                 <span
                                     v-if="ticket.max_per_user"

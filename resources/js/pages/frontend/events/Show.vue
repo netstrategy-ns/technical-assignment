@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import TicketsCard from '@/components/custom/Cards/TicketsCard.vue';
+import { useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
 
-defineProps<{
+const props = defineProps<{
     event: {
         id: number;
         slug: string;
@@ -24,7 +26,6 @@ defineProps<{
             tickets: Array<{
                 id: number;
                 price: string;
-                quantity_total: number | null;
                 max_per_user: number | null;
                 available_quantity: number;
                 user_hold_quantity: number;
@@ -33,6 +34,24 @@ defineProps<{
     };
     saleNotStarted: boolean;
 }>();
+
+const totalAvailableTickets = computed(() =>
+    props.event.ticket_types.reduce((total, ticketType) => {
+        return total + Math.max(0, ticketType.available_quantity);
+    }, 0),
+);
+
+function refreshEventAndCart(): void {
+    router.visit(window.location.href, {
+        preserveScroll: true,
+        preserveState: true,
+        replace: true,
+        only: ['event', 'saleNotStarted', 'cart'],
+    });
+}
+
+useCartExpirationAutoRefresh();
+useCartHoldExpiredEvent(refreshEventAndCart);
 </script>
 
 <template>
@@ -71,6 +90,7 @@ defineProps<{
                     La vendita non è ancora iniziata. I biglietti non sono acquistabili.
                 </div>
 
+                <h2 class="mt-8 text-lg font-semibold">Biglietti disponibili: {{ totalAvailableTickets }}</h2>
                 <TicketsCard :event="event" :sale-not-started="saleNotStarted" />
             </article>
         </div>
