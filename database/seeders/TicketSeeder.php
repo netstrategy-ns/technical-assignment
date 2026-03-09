@@ -25,7 +25,6 @@ class TicketSeeder extends Seeder
                 Ticket::factory()->create([
                     'ticket_type_id' => $ticketType->id,
                     'price' => fake()->randomFloat(2, 10, 100),
-                    'quantity_total' => fake()->numberBetween(100, 1000),
                     'max_per_user' => fake()->numberBetween(1, 10),
                 ]);
 

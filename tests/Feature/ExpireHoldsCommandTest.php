@@ -51,15 +51,19 @@ function createTicketForExpireHoldTest(array $eventOverrides = [], array $ticket
         'name' => 'Standard',
     ]);
 
+    $ticketTypeQuantity = array_key_exists('quota_quantity', $ticketOverrides)
+        ? $ticketOverrides['quota_quantity']
+        : 10;
+    unset($ticketOverrides['quota_quantity']);
+
     TicketTypeQuota::create([
         'ticket_type_id' => $ticketType->id,
-        'quantity' => 10,
+        'quantity' => $ticketTypeQuantity,
     ]);
 
     $ticket = Ticket::create(array_merge([
         'ticket_type_id' => $ticketType->id,
         'price' => '49.90',
-        'quantity_total' => 10,
         'max_per_user' => 10,
     ], $ticketOverrides));
 
@@ -98,7 +102,7 @@ describe('Expire holds command', function (): void {
     test('ripristina la disponibilita del ticket dopo la scadenza', function (): void {
         $user = User::factory()->create();
         ['ticket' => $ticket] = createTicketForExpireHoldTest([], [
-            'quantity_total' => 10,
+            'quota_quantity' => 10,
         ]);
 
         Hold::create([
@@ -118,8 +122,8 @@ describe('Expire holds command', function (): void {
     });
 
     test('aggiorna tutte le hold scadute anche in batch piccoli', function (): void {
-        ['ticket' => $ticket] = createTicketForExpireHoldTest([], [
-            'quantity_total' => 20,
+        ['ticket' => $ticket] = createTicketForExpireHoldTest(['available_tickets' => 20], [
+            'quota_quantity' => 20,
         ]);
 
         $users = User::factory()->count(4)->create();

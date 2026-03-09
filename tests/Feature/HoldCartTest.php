@@ -57,15 +57,19 @@ function createTicketForHoldTest(array $eventOverrides = [], array $ticketOverri
         'name' => 'Standard',
     ]);
 
+    $ticketTypeQuantity = array_key_exists('quota_quantity', $ticketOverrides)
+        ? $ticketOverrides['quota_quantity']
+        : 10;
+    unset($ticketOverrides['quota_quantity']);
+
     TicketTypeQuota::create([
         'ticket_type_id' => $ticketType->id,
-        'quantity' => 10,
+        'quantity' => $ticketTypeQuantity,
     ]);
 
     $ticket = Ticket::create(array_merge([
         'ticket_type_id' => $ticketType->id,
         'price' => '49.90',
-        'quantity_total' => 10,
         'max_per_user' => 4,
     ], $ticketOverrides));
 
@@ -111,7 +115,7 @@ describe('Hold cart actions', function (): void {
     test('POST /cart/hold con quantita superiore al disponibile restituisce errore', function (): void {
         $user = User::factory()->create();
         ['ticket' => $ticket, 'event' => $event] = createTicketForHoldTest([], [
-            'quantity_total' => 2,
+            'quota_quantity' => 2,
         ]);
 
         actingAs($user);
@@ -270,7 +274,7 @@ describe('Controllo disponibilità e carrello', function (): void {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
         ['ticket' => $ticket] = createTicketForHoldTest([], [
-            'quantity_total' => 10,
+            'quota_quantity' => 10,
             'max_per_user' => 10,
         ]);
 

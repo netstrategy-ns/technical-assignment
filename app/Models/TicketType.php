@@ -62,11 +62,11 @@ class TicketType extends Model
      * HELPER METHODS
      * ------------------------------------------------------------
      */
-    public function getAvailableQuantity(): int
+    public function getAvailableQuantity(?int $excludingHoldId = null): int
     {
         $quota = (int) ($this->quota?->quantity ?? 0);
         $sold = $this->tickets->sum(fn (Ticket $ticket): int => $ticket->soldQuantity());
-        $held = $this->tickets->sum(fn (Ticket $ticket): int => $ticket->validHeldQuantity());
+        $held = $this->tickets->sum(fn (Ticket $ticket): int => $ticket->validHeldQuantity($excludingHoldId));
 
         return max(0, $quota - $sold - $held);
     }

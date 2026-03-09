@@ -16,13 +16,11 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_type_id',
         'price',
-        'quantity_total',
         'max_per_user',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'quantity_total' => 'integer',
         'max_per_user' => 'integer',
     ];
 
@@ -70,9 +68,6 @@ class Ticket extends Model
 
     public function getAvailableQuantity(?int $excludingHoldId = null): int
     {
-        return max(
-            0,
-            $this->quantity_total - $this->soldQuantity() - $this->validHeldQuantity($excludingHoldId),
-        );
+        return max(0, (int) $this->ticketType?->getAvailableQuantity($excludingHoldId));
     }
 }

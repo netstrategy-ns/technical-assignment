@@ -22,7 +22,6 @@ class TicketTypeShowResource extends JsonResource
             'tickets' => $this->tickets->map(static fn ($ticket) => [
                 'id' => $ticket->id,
                 'price' => $ticket->price,
-                'quantity_total' => $ticket->quantity_total,
                 'max_per_user' => $ticket->max_per_user,
                 'available_quantity' => $ticket->getAvailableQuantity(),
                 'user_hold_quantity' => $request->user() === null
