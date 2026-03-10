@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Orders;
 
-use App\Http\Requests\StoreTicketRequest;
-use App\Http\Requests\UpdateTicketRequest;
-use App\Models\Ticket;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Orders\StoreOrderItemRequest;
+use App\Http\Requests\Orders\UpdateOrderItemRequest;
+use App\Models\OrderItem;
 
-class TicketController extends Controller
+class OrderItemController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +28,7 @@ class TicketController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreTicketRequest $request)
+    public function store(StoreOrderItemRequest $request)
     {
         //
     }
@@ -35,7 +36,7 @@ class TicketController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Ticket $ticket)
+    public function show(OrderItem $orderItem)
     {
         //
     }
@@ -43,7 +44,7 @@ class TicketController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Ticket $ticket)
+    public function edit(OrderItem $orderItem)
     {
         //
     }
@@ -51,7 +52,7 @@ class TicketController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateTicketRequest $request, Ticket $ticket)
+    public function update(UpdateOrderItemRequest $request, OrderItem $orderItem)
     {
         //
     }
@@ -59,7 +60,7 @@ class TicketController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Ticket $ticket)
+    public function destroy(OrderItem $orderItem)
     {
         //
     }

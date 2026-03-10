@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\Frontend\CartController;
-use App\Http\Controllers\Frontend\CheckoutController;
-use App\Http\Controllers\Frontend\EventQueueController;
-use App\Http\Controllers\Frontend\HoldController;
-use App\Http\Controllers\Frontend\HomeController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Checkout\CartController;
+use App\Http\Controllers\Checkout\CheckoutController;
+use App\Http\Controllers\Events\EventQueueController;
+use App\Http\Controllers\Checkout\HoldController;
+use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Orders\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');

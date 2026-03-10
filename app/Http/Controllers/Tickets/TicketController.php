@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Tickets;
 
-use App\Http\Requests\StoreVenueTypeRequest;
-use App\Http\Requests\UpdateVenueTypeRequest;
-use App\Models\VenueType;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Tickets\StoreTicketRequest;
+use App\Http\Requests\Tickets\UpdateTicketRequest;
+use App\Models\Ticket;
 
-class VenueTypeController extends Controller
+class TicketController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +28,7 @@ class VenueTypeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreVenueTypeRequest $request)
+    public function store(StoreTicketRequest $request)
     {
         //
     }
@@ -35,7 +36,7 @@ class VenueTypeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(VenueType $venueType)
+    public function show(Ticket $ticket)
     {
         //
     }
@@ -43,7 +44,7 @@ class VenueTypeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(VenueType $venueType)
+    public function edit(Ticket $ticket)
     {
         //
     }
@@ -51,7 +52,7 @@ class VenueTypeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateVenueTypeRequest $request, VenueType $venueType)
+    public function update(UpdateTicketRequest $request, Ticket $ticket)
     {
         //
     }
@@ -59,7 +60,7 @@ class VenueTypeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(VenueType $venueType)
+    public function destroy(Ticket $ticket)
     {
         //
     }

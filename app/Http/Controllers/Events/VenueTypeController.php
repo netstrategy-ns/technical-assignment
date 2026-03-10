@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Events;
 
-use App\Http\Requests\StoreOrderItemRequest;
-use App\Http\Requests\UpdateOrderItemRequest;
-use App\Models\OrderItem;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\VenueTypes\StoreVenueTypeRequest;
+use App\Http\Requests\VenueTypes\UpdateVenueTypeRequest;
+use App\Models\VenueType;
 
-class OrderItemController extends Controller
+class VenueTypeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +28,7 @@ class OrderItemController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreOrderItemRequest $request)
+    public function store(StoreVenueTypeRequest $request)
     {
         //
     }
@@ -35,7 +36,7 @@ class OrderItemController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(OrderItem $orderItem)
+    public function show(VenueType $venueType)
     {
         //
     }
@@ -43,7 +44,7 @@ class OrderItemController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(OrderItem $orderItem)
+    public function edit(VenueType $venueType)
     {
         //
     }
@@ -51,7 +52,7 @@ class OrderItemController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateOrderItemRequest $request, OrderItem $orderItem)
+    public function update(UpdateVenueTypeRequest $request, VenueType $venueType)
     {
         //
     }
@@ -59,7 +60,7 @@ class OrderItemController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(OrderItem $orderItem)
+    public function destroy(VenueType $venueType)
     {
         //
     }
