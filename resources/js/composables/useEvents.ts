@@ -1,5 +1,5 @@
-import type { BuildEventsIndexUrlOptions, EventCardEvent, EventCategoryOption, EventFiltersState } from '@/types/models/event';
 import { buildEventsIndexUrl as buildEventsIndexUrlFromFilters } from '@/composables/useEventFilters';
+import type { BuildEventsIndexUrlOptions, EventFiltersState } from '@/types/models/event';
 
 export type { EventFiltersState } from '@/types/models/event';
 

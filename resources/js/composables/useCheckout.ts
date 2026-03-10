@@ -1,5 +1,5 @@
-import { computed, ref } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useCart } from '@/composables/useCart';
 import { useFormatData } from '@/composables/useFormatData';
 import type { CheckoutEventGroup, CheckoutPageErrorBag } from '@/types/models/checkout';

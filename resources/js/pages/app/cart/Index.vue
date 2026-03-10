@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Minus, Plus, Trash2 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart, useCartAutoRefresh, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
+import { useCartItemsByEvent } from '@/composables/useCartItemsByEvent';
+import { useCartQuantityActions } from '@/composables/useCartQuantityActions';
 import { useFormatData } from '@/composables/useFormatData';
+import { useRemainingTime } from '@/composables/useRemainingTime';
 import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 
 const page = usePage();
@@ -15,172 +18,29 @@ const { items, totalItems, totalAmount, isEmpty, remove, update, refresh } = use
 useCartAutoRefresh();
 useCartExpirationAutoRefresh();
 useCartHoldExpiredEvent(refresh);
-const maxReachedMessages = ref<Record<number, boolean>>({});
-const actionErrors = ref<Record<number, string>>({});
-const loadingHolds = ref<Record<number, boolean>>({});
-const now = ref(Date.now());
-let expirationTickerId: number | null = null;
 const { formatPrice } = useFormatData();
-
-const parseRemainingSeconds = (expiresAt: string | null): number => {
-    if (!expiresAt) {
-        return 0;
-    }
-
-    const expiresAtMs = Date.parse(expiresAt);
-    if (!Number.isFinite(expiresAtMs)) {
-        return 0;
-    }
-
-    return Math.max(0, Math.floor((expiresAtMs - now.value) / 1000));
-};
-
-const formatRemainingTime = (totalSeconds: number): string => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-};
-
-onMounted(() => {
-    expirationTickerId = window.setInterval(() => {
-        now.value = Date.now();
-    }, 1000);
+const { parseRemainingSeconds, formatRemainingTime } = useRemainingTime();
+const itemsByEvent = useCartItemsByEvent({
+    items,
+    parseRemainingSeconds,
 });
-
-onUnmounted(() => {
-    if (expirationTickerId !== null) {
-        window.clearInterval(expirationTickerId);
-        expirationTickerId = null;
-    }
-});
+const {
+    maxReachedMessages,
+    actionErrors,
+    loadingHolds,
+    maxQuantityForHold,
+    hasReachedUserLimit,
+    decrementQuantity,
+    incrementQuantity,
+} =
+    useCartQuantityActions({
+        remove,
+        update,
+    });
 
 const totalAmountFormatted = computed(() => formatPrice(totalAmount.value));
 
-const itemsByEvent = computed(() => {
-    const byEvent = new Map<
-        number,
-        {
-            event: {
-                id: number;
-                slug: string;
-                title: string;
-            };
-            lines: Array<{
-                holdId: number;
-                ticketTypeName: string;
-                ticketId: number;
-                price: string;
-                maxPerUser: number | null;
-                quantity: number;
-                subtotal: number;
-                expiresAt: string | null;
-                availableQuantity: number;
-                remainingSeconds: number;
-                isExpired: boolean;
-            }>;
-        }
-    >();
-    for (const item of items.value) {
-        const remainingSeconds = parseRemainingSeconds(item.expires_at);
-        let group = byEvent.get(item.event.id);
-        if (!group) {
-            group = {
-                event: item.event,
-                lines: [],
-            };
-            byEvent.set(item.event.id, group);
-        }
-        const priceNum = parseFloat(item.ticket.price);
-        group.lines.push({
-            holdId: item.id,
-            ticketTypeName: item.ticket_type.name,
-            ticketId: item.ticket.id,
-            price: item.ticket.price,
-            maxPerUser: item.ticket.max_per_user,
-            quantity: item.quantity,
-            subtotal: priceNum * item.quantity,
-            expiresAt: item.expires_at,
-            availableQuantity: item.ticket.available_quantity,
-            remainingSeconds,
-            isExpired: remainingSeconds <= 0,
-        });
-    }
-    return Array.from(byEvent.values());
-});
 
-const maxQuantityForHold = (availableQuantity: number, maxPerUser: number | null): number => {
-    if (maxPerUser != null && maxPerUser > 0) {
-        return Math.min(availableQuantity, maxPerUser);
-    }
-
-    return availableQuantity;
-};
-
-const hasReachedUserLimit = (quantity: number, maxPerUser: number | null): boolean => {
-    return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
-};
-
-const decrementQuantity = (holdId: number, quantity: number, isExpired: boolean) => {
-    if (loadingHolds.value[holdId] || isExpired) {
-        return;
-    }
-
-    maxReachedMessages.value[holdId] = false;
-    actionErrors.value[holdId] = '';
-
-    if (quantity <= 1) {
-        loadingHolds.value[holdId] = true;
-        remove(holdId, {
-            onFinish: () => {
-                loadingHolds.value[holdId] = false;
-            },
-        });
-        return;
-    }
-
-    loadingHolds.value[holdId] = true;
-    update(holdId, quantity - 1, {
-        onError: (errors) => {
-            actionErrors.value[holdId] = errors.quantity ?? 'Impossibile aggiornare la quantita.';
-        },
-        onFinish: () => {
-            loadingHolds.value[holdId] = false;
-        },
-    });
-};
-
-const incrementQuantity = (
-    holdId: number,
-    quantity: number,
-    availableQuantity: number,
-    maxPerUser: number | null,
-    isExpired: boolean,
-): void => {
-    if (loadingHolds.value[holdId] || isExpired) {
-        return;
-    }
-
-    const maxQuantity = maxQuantityForHold(availableQuantity, maxPerUser);
-
-    if (quantity >= maxQuantity) {
-        maxReachedMessages.value[holdId] = true;
-        return;
-    }
-
-    maxReachedMessages.value[holdId] = false;
-    actionErrors.value[holdId] = '';
-    loadingHolds.value[holdId] = true;
-
-    update(holdId, quantity + 1, {
-        onError: (errors) => {
-            actionErrors.value[holdId] = errors.quantity ?? 'Impossibile aggiornare la quantita.';
-        },
-        onFinish: () => {
-            loadingHolds.value[holdId] = false;
-        },
-    });
-};
 </script>
 
 <template>

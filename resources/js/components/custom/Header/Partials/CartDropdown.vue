@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -9,6 +9,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCart, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
+import { useCartItemsByEvent } from '@/composables/useCartItemsByEvent';
+import { useCartQuantityActions } from '@/composables/useCartQuantityActions';
 import { useFormatData } from '@/composables/useFormatData';
 
 const page = usePage();
@@ -17,10 +19,17 @@ const checkoutUrl = computed(() => (page.props.urls as Record<string, string>)?.
 
 const { items, totalItems, totalAmount, isEmpty, remove, update } = useCart();
 useCartExpirationAutoRefresh();
-const maxReachedMessages = ref<Record<number, boolean>>({});
-const actionErrors = ref<Record<number, string>>({});
-const loadingHolds = ref<Record<number, boolean>>({});
 const { formatPrice } = useFormatData();
+const {
+    maxReachedMessages,
+    actionErrors,
+    loadingHolds,
+    maxQuantityForHold,
+    hasReachedUserLimit,
+    decrementQuantity,
+    incrementQuantity,
+} = useCartQuantityActions({ remove, update });
+const itemsByEvent = useCartItemsByEvent({ items });
 
 const hasCartItems = computed(() => totalItems.value > 0);
 const badgeLabel = computed(() =>
@@ -38,132 +47,7 @@ const refreshCartPayload = (): void => {
 };
 
 useCartHoldExpiredEvent(refreshCartPayload);
-const itemsByEvent = computed(() => {
-    const byEvent = new Map<
-        number,
-        {
-            event: {
-                id: number;
-                slug: string;
-                title: string;
-            };
-            eventTotal: number;
-            lines: Array<{
-                holdId: number;
-                ticketId: number;
-                ticketTypeName: string;
-                price: string;
-                maxPerUser: number | null;
-                quantity: number;
-                lineTotal: number;
-                expiresAt: string | null;
-                availableQuantity: number;
-            }>;
-        }
-    >();
 
-    for (const item of items.value) {
-        const priceNumber = parseFloat(item.ticket.price);
-        const lineTotal = priceNumber * item.quantity;
-
-        let group = byEvent.get(item.event.id);
-        if (!group) {
-            group = {
-                event: item.event,
-                eventTotal: 0,
-                lines: [],
-            };
-            byEvent.set(item.event.id, group);
-        }
-
-        group.lines.push({
-            holdId: item.id,
-            ticketId: item.ticket.id,
-            ticketTypeName: item.ticket_type.name,
-            price: item.ticket.price,
-            maxPerUser: item.ticket.max_per_user,
-            quantity: item.quantity,
-            lineTotal,
-            expiresAt: item.expires_at,
-            availableQuantity: item.ticket.available_quantity,
-        });
-        group.eventTotal += lineTotal;
-    }
-
-    return Array.from(byEvent.values());
-});
-
-const maxQuantityForHold = (availableQuantity: number, maxPerUser: number | null): number => {
-    if (maxPerUser != null && maxPerUser > 0) {
-        return Math.min(availableQuantity, maxPerUser);
-    }
-
-    return availableQuantity;
-};
-
-const hasReachedUserLimit = (quantity: number, maxPerUser: number | null): boolean => {
-    return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
-};
-
-const decrementQuantity = (holdId: number, quantity: number): void => {
-    if (loadingHolds.value[holdId]) {
-        return;
-    }
-
-    maxReachedMessages.value[holdId] = false;
-    actionErrors.value[holdId] = '';
-
-    if (quantity <= 1) {
-        loadingHolds.value[holdId] = true;
-        remove(holdId, {
-            onFinish: () => {
-                loadingHolds.value[holdId] = false;
-            },
-        });
-        return;
-    }
-
-    loadingHolds.value[holdId] = true;
-    update(holdId, quantity - 1, {
-        onError: (errors) => {
-            actionErrors.value[holdId] = errors.quantity ?? 'Impossibile aggiornare la quantita.';
-        },
-        onFinish: () => {
-            loadingHolds.value[holdId] = false;
-        },
-    });
-};
-
-const incrementQuantity = (
-    holdId: number,
-    quantity: number,
-    availableQuantity: number,
-    maxPerUser: number | null,
-): void => {
-    if (loadingHolds.value[holdId]) {
-        return;
-    }
-
-    const maxQuantity = maxQuantityForHold(availableQuantity, maxPerUser);
-
-    if (quantity >= maxQuantity) {
-        maxReachedMessages.value[holdId] = true;
-        return;
-    }
-
-    maxReachedMessages.value[holdId] = false;
-    actionErrors.value[holdId] = '';
-    loadingHolds.value[holdId] = true;
-
-    update(holdId, quantity + 1, {
-        onError: (errors) => {
-            actionErrors.value[holdId] = errors.quantity ?? 'Impossibile aggiornare la quantita.';
-        },
-        onFinish: () => {
-            loadingHolds.value[holdId] = false;
-        },
-    });
-};
 </script>
 
 <template>
