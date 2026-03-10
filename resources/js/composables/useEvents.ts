@@ -1,27 +1,11 @@
-import type { EventFiltersState } from '@/composables/useEventFilters';
+import type { BuildEventsIndexUrlOptions, EventCardEvent, EventCategoryOption, EventFiltersState } from '@/types/models/event';
 import { buildEventsIndexUrl as buildEventsIndexUrlFromFilters } from '@/composables/useEventFilters';
 
-export type { EventFiltersState } from '@/composables/useEventFilters';
+export type { EventFiltersState } from '@/types/models/event';
 
 const defaultBaseUrl = '/events';
 
-export interface EventCardEvent {
-    id: number;
-    slug: string;
-    title: string;
-    location: string | null;
-    image_url: string | null;
-    starts_at: string | null;
-    is_featured?: boolean;
-    category?: { id: number; name: string } | null;
-    venueType?: { id: number; name: string } | null;
-}
-
-export interface EventCategoryOption {
-    id: number;
-    name: string;
-    slug: string;
-}
+export type { EventCardEvent, EventCategoryOption } from '@/types/models/event';
 
 // Costruzione e normalizzazione URL evento singolo (no slug ---> no slash)
 export const buildEventDetailUrl = (slug: string, baseUrl: string = defaultBaseUrl): string => {
@@ -35,6 +19,6 @@ export const buildEventsIndexUrl = buildEventsIndexUrlFromFilters;
 // Esporta le funzioni per passare dal componente solo slug, filtri e opzioni per la costruzione dell'URL
 export const useEvents = (eventsBaseUrl: string = defaultBaseUrl) => ({
     buildEventDetailUrl: (slug: string) => buildEventDetailUrl(slug, eventsBaseUrl),
-    buildEventsIndexUrl: (filters: EventFiltersState, options?: { resetPage?: boolean; perPage?: number }) =>
+    buildEventsIndexUrl: (filters: EventFiltersState, options?: BuildEventsIndexUrlOptions) =>
         buildEventsIndexUrlFromFilters(eventsBaseUrl, filters, options),
 });

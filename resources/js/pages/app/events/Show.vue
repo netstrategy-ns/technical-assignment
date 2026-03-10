@@ -7,14 +7,12 @@ import {
   useCartExpirationAutoRefresh,
   useCartHoldExpiredEvent,
 } from "@/composables/useCart";
-import type { QueueEvent, QueueStatus } from "@/composables/useEventQueue";
+import type { QueueEvent, QueueStatus } from "@/types/models/queue";
 import { useEventQueue } from "@/composables/useEventQueue";
 import ApplicationLayout from "@/layouts/ApplicationLayout.vue";
 
-type ShowEvent = QueueEvent;
-
 const props = defineProps<{
-  event: ShowEvent;
+  event: QueueEvent;
   saleNotStarted: boolean;
   queueStatus: QueueStatus;
 }>();
@@ -26,7 +24,7 @@ const isAuthenticated = computed(() =>
 const { storeCurrent } = useAuthRedirect();
 storeCurrent('login');
 
-const eventData = ref<ShowEvent>(props.event);
+const eventData = ref<QueueEvent>(props.event);
 const currentEvent = computed(() => eventData.value);
 
 const totalAvailableTickets = computed(() =>
@@ -45,7 +43,7 @@ const {
   statusLabel,
   refreshQueueStatus,
   joinQueue,
-} = useEventQueue<ShowEvent>({
+} = useEventQueue<QueueEvent>({
   event: currentEvent,
   initialQueueStatus: props.queueStatus,
   isAuthenticated,

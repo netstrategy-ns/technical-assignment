@@ -5,6 +5,7 @@ import CategoryEventsSlider from '@/components/custom/Sliders/CategoryEventsSlid
 import HeroEventsSlider from '@/components/custom/Sliders/HeroEventsSlider.vue';
 import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 import { useAuthRedirect } from '@/composables/useAuthRedirect';
+import type { EventCardEvent, HomeEventsByCategory } from '@/types/models/event';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
@@ -15,29 +16,8 @@ const eventsIndex = computed(() => urls.value.eventsIndex ?? '/events');
 
 withDefaults(
     defineProps<{
-        featuredEvents: Array<{
-            id: number;
-            slug: string;
-            title: string;
-            location: string | null;
-            image_url: string | null;
-            starts_at: string | null;
-            category: { id: number; name: string } | null;
-            venueType?: { id: number; name: string } | null;
-        }>;
-        eventsByCategory: Array<{
-            category: { id: number; name: string; slug: string };
-            events: Array<{
-                id: number;
-                slug: string;
-                title: string;
-                location: string | null;
-                image_url: string | null;
-                starts_at: string | null;
-                category: { id: number; name: string } | null;
-                venueType?: { id: number; name: string } | null;
-            }>;
-        }>;
+        featuredEvents: EventCardEvent[];
+        eventsByCategory: HomeEventsByCategory[];
         canRegister: boolean;
     }>(),
     { featuredEvents: () => [], eventsByCategory: () => [], canRegister: true },

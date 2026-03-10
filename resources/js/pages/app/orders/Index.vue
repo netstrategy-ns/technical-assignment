@@ -2,15 +2,10 @@
 import { Head, Link } from "@inertiajs/vue3";
 import { useFormatData } from "@/composables/useFormatData";
 import ApplicationLayout from "@/layouts/ApplicationLayout.vue";
+import type { OrderListItem } from '@/types/models/order';
 
 defineProps<{
-  orders: Array<{
-    id: number;
-    public_id: string | null;
-    status: string;
-    total_amount: string | number;
-    created_at: string | null;
-  }>;
+  orders: OrderListItem[];
   totalOrders: number;
 }>();
 

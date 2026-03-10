@@ -1,24 +1,11 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { updateCurrentUrlParams } from '@/composables/useQueryUrl';
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from '@/constants';
+import type { PerPageOption } from '@/types/models/pagination';
 
-export type PerPageOption = (typeof PER_PAGE_OPTIONS)[number];
+export type { PaginationLink, PaginationNavPayload, PaginatedResponse, PerPageOption } from '@/types/models/pagination';
+
 export { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS };
-
-export interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-
-export interface PaginationNavPayload {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    links: PaginationLink[];
-}
 
 // Gestisce la paginazione usando useQueryUrl per aggiornare l'URL corrente
 export const usePagination = () => {

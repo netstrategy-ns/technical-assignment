@@ -13,6 +13,13 @@ import {
     EVENT_SORT_OPTIONS,
     PER_PAGE_OPTIONS,
 } from '@/constants';
+import type {
+    EventSortValue,
+    BuildEventsIndexUrlOptions,
+    EventFiltersState,
+    UseEventFiltersPanelOptions,
+    UseEventFiltersPanelReturn,
+} from '@/types/models/event';
 
 const defaultBaseUrl = '/events';
 
@@ -21,47 +28,15 @@ const defaultBaseUrl = '/events';
 // ------------------------------------------------------------
 
 
-export type EventSortValue = (typeof EVENT_SORT_OPTIONS)[number]['value'];
+ 
 export { DEFAULT_SORT, EVENT_SORT_OPTIONS };
-
-export interface EventFiltersState {
-    featured: boolean;
-    category?: string | null;
-    search?: string | null;
-    location?: string | null;
-    start_date?: string | null;
-    end_date?: string | null;
-    available_tickets?: boolean;
-    sort?: EventSortValue | string | null;
-}
-
-export interface BuildEventsIndexUrlOptions {
-    resetPage?: boolean;
-    perPage?: number;
-}
-
-export interface UseEventFiltersPanelOptions {
-    preserveState?: boolean;
-    debounceMs?: number;
-    searchInputRef?: Ref<{ $el?: HTMLInputElement } | null>;
-}
-
-export interface UseEventFiltersPanelReturn {
-    search: Ref<string>;
-    category: Ref<string>;
-    start_date: Ref<string>;
-    end_date: Ref<string>;
-    location: Ref<string>;
-    availableTickets: Ref<boolean>;
-    featured: Ref<boolean>;
-    sort: Ref<string>;
-    currentPerPage: Ref<number>;
-    applyFilters: () => void;
-    applyFiltersDebounced: () => void;
-    resetFilters: () => void;
-    hasActiveFilters: Ref<boolean>;
-    buildQuery: () => EventFiltersState;
-}
+export type {
+    EventSortValue,
+    BuildEventsIndexUrlOptions,
+    EventFiltersState,
+    UseEventFiltersPanelOptions,
+    UseEventFiltersPanelReturn,
+} from '@/types/models/event';
 
 // ------------------------------------------------------------
 // Funzioni

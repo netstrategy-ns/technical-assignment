@@ -1,42 +1,6 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted } from 'vue';
-
-export interface CartItem {
-    id: number;
-    quantity: number;
-    status: string;
-    expires_at: string | null;
-    remaining_seconds: number;
-    ticket: {
-        id: number;
-        price: string;
-        max_per_user: number | null;
-        available_quantity: number;
-    };
-    ticket_type: {
-        id: number;
-        name: string;
-    };
-    event: {
-        id: number;
-        slug: string;
-        title: string;
-    };
-}
-
-interface CartPayload {
-    items: CartItem[];
-    summary: {
-        total_items: number;
-        total_amount: number;
-    };
-}
-
-interface CartActionOptions {
-    onSuccess?: () => void;
-    onError?: (errors: Record<string, string>) => void;
-    onFinish?: () => void;
-}
+import type { CartActionOptions, CartItem, CartPayload } from '@/types/models/cart';
 
 let cartAutoRefreshIntervalId: number | null = null;
 let cartAutoRefreshConsumers = 0;

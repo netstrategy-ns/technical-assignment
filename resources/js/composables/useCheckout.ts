@@ -2,25 +2,7 @@ import { computed, ref } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { useCart } from '@/composables/useCart';
 import { useFormatData } from '@/composables/useFormatData';
-
-type CheckoutPageErrorBag = Record<string, unknown>;
-
-export interface CheckoutLine {
-    holdId: number;
-    ticketTypeName: string;
-    quantity: number;
-    subtotal: number;
-}
-
-export interface CheckoutEventGroup {
-    event: {
-        id: number;
-        slug: string;
-        title: string;
-    };
-    lines: CheckoutLine[];
-    eventTotal: number;
-}
+import type { CheckoutEventGroup, CheckoutPageErrorBag } from '@/types/models/checkout';
 
 export const useCheckout = () => {
     const page = usePage();
@@ -32,19 +14,8 @@ export const useCheckout = () => {
     const loadingText = ref('Conferma acquisto');
 
     const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
-    const itemsByEvent = computed(() => {
-        const grouped = new Map<
-            number,
-            {
-                event: {
-                    id: number;
-                    slug: string;
-                    title: string;
-                };
-                lines: CheckoutLine[];
-                eventTotal: number;
-            }
-        >();
+    const itemsByEvent = computed<CheckoutEventGroup[]>(() => {
+        const grouped = new Map<number, CheckoutEventGroup>();
 
         for (const item of cart.items.value) {
             let group = grouped.get(item.event.id);
@@ -57,10 +28,13 @@ export const useCheckout = () => {
                 grouped.set(item.event.id, group);
             }
 
-            const lineSubtotal = parseFloat(item.ticket.price) * item.quantity;
+            const unitPrice = parseFloat(item.ticket.price);
+            const safeUnitPrice = Number.isFinite(unitPrice) ? unitPrice : 0;
+            const lineSubtotal = safeUnitPrice * item.quantity;
             group.lines.push({
                 holdId: item.id,
                 ticketTypeName: item.ticket_type.name,
+                price: safeUnitPrice,
                 quantity: item.quantity,
                 subtotal: lineSubtotal,
             });

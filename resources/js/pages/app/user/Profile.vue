@@ -10,6 +10,7 @@ import TwoFactorContent from '@/components/custom/UserProfile/TwoFactorContent.v
 import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import type { User } from '@/types';
+import type { SettingsSection } from '@/types/models/settings';
 
 type Props = {
     mustVerifyEmail?: boolean;
@@ -30,7 +31,7 @@ const user = computed(() => page.props.auth.user as User);
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 
 const getSettingsUrl = (
-    suffix: 'profile' | 'password' | 'appearance' | 'two-factor',
+    suffix: SettingsSection,
 ): string => {
     const base = page.url.includes('/admin/user/settings')
         ? {
@@ -44,7 +45,7 @@ const getSettingsUrl = (
             password: urls.value.settingsPassword ?? '/user/settings/password',
             appearance: urls.value.settingsAppearance ?? '/user/settings/appearance',
             'two-factor': urls.value.settingsTwoFactor ?? '/user/settings/two-factor',
-        };
+        } satisfies { [K in SettingsSection]: string };
 
     return base[suffix];
 };

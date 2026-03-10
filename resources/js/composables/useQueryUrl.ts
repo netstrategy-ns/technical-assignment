@@ -1,4 +1,4 @@
-export type QueryParamValue = string | number | boolean | null | undefined;
+import type { QueryParamValue } from '@/types/models/query';
 
 export const normalizeBaseUrl = (baseUrl: string, fallback = '/events'): string => {
     return (baseUrl ?? fallback).replace(/\?.*$/, '').replace(/\/$/, '') || fallback;

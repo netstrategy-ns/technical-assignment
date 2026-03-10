@@ -1,18 +1,4 @@
-export type AuthFlow = 'login' | 'register';
-
-export interface AuthRedirectPayload {
-    path: string;
-    flow: AuthFlow;
-    storedAt: number;
-}
-
-type SafeAuthRedirect = {
-    get: (flow?: AuthFlow) => string | null;
-    storeCurrent: (flow: AuthFlow) => void;
-    storePath: (path: string, flow: AuthFlow) => void;
-    consume: (flow?: AuthFlow) => string | null;
-    clear: () => void;
-};
+import type { AuthFlow, AuthRedirectPayload, AuthRedirectStorage } from '@/types/models/auth-redirect';
 
 const AUTH_REDIRECT_KEY = 'authRedirectPath';
 const AUTH_REDIRECT_TTL_MS = 5 * 60 * 1000;
@@ -152,7 +138,7 @@ const savePayload = (payload: AuthRedirectPayload): void => {
     }
 };
 
-export const useAuthRedirect = (): SafeAuthRedirect => {
+export const useAuthRedirect = (): AuthRedirectStorage => {
     const storePath = (path: string, flow: AuthFlow): void => {
         const payload = createSafePayload(path, flow);
 

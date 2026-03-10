@@ -1,7 +1,4 @@
-export interface UseFormatDataOptions {
-    locale?: string;
-    currency?: string;
-}
+import type { UseFormatDataOptions } from '@/types/models/format';
 
 export const useFormatData = (options: UseFormatDataOptions = {}) => {
     const locale = options.locale ?? 'it-IT';

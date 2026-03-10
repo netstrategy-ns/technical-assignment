@@ -6,8 +6,8 @@ import EventFilters from '@/components/custom/Filters/EventFilters.vue';
 import PaginationNav from '@/components/custom/Pagination/PaginationNav.vue';
 import PerPageSelect from '@/components/custom/Pagination/PerPageSelect.vue';
 import { useAuthRedirect } from '@/composables/useAuthRedirect';
-import type { EventCardEvent, EventFiltersState } from '@/composables/useEvents';
-import type { PerPageOption } from '@/composables/usePagination';
+import type { EventCardEvent, EventCategoryOption, EventFiltersState } from '@/types/models/event';
+import type { PaginatedResponse, PerPageOption } from '@/types/models/pagination';
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS, usePagination } from '@/composables/usePagination';
 import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 
@@ -18,17 +18,10 @@ const { storeCurrent } = useAuthRedirect();
 storeCurrent('login');
 
 const props = defineProps<{
-    events: {
-        data: EventCardEvent[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-        links: Array<{ url: string | null; label: string; active: boolean }>;
-    };
-    categories?: Array<{ id: number; name: string; slug: string }>;
+    events: PaginatedResponse<EventCardEvent>;
+    categories?: EventCategoryOption[];
     filters: EventFiltersState;
-    activeCategory?: { id: number; name: string; slug: string } | null;
+    activeCategory?: EventCategoryOption | null;
 }>();
 
 const { onPerPageChange } = usePagination();

@@ -65,10 +65,13 @@ const {
                                     <span>
                                         {{ line.ticketTypeName }} x {{ line.quantity }}
                                     </span>
-                                    <span class="font-medium">{{ formatPrice(line.subtotal) }}</span>
+                                    <span class="text-right">
+                                        <span>Prezzo singolo: {{ formatPrice(line.price) }}</span>
+                                        <span class="font-medium block">Subtotale: {{ formatPrice(line.subtotal) }}</span>
+                                </span>
                                 </li>
                             </ul>
-                            <div class="mt-2 text-sm text-muted-foreground">
+                            <div class="flex justify-end mt-4 text-primary font-bold">
                                 Totale evento: {{ formatPrice(group.eventTotal) }}
                             </div>
                         </section>

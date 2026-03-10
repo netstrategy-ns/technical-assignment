@@ -2,36 +2,15 @@
 import { Head, Link } from "@inertiajs/vue3";
 import { useFormatData } from "@/composables/useFormatData";
 import ApplicationLayout from "@/layouts/ApplicationLayout.vue";
+import type { Order } from '@/types/models/order';
 
 defineProps<{
-  order: {
-    id: number;
-    status: string;
-    total_amount: number | string;
-    created_at: string;
-    order_items: Array<{
-      id: number;
-      quantity: number;
-      unit_price: string;
-      ticket: {
-        id: number;
-        ticket_type: {
-          id: number;
-          name: string;
-          event: {
-            id: number;
-            slug: string;
-            title: string;
-          };
-        };
-      };
-    }>;
-  };
+  order: Order;
 }>();
 
 const { formatPrice, statusLabel, formatDate } = useFormatData();
 
-const subtotalByItem = (item: { quantity: number; unit_price: string }) =>
+const subtotalByItem = (item: Order['order_items'][number]) =>
   Number(item.unit_price) * item.quantity;
 </script>
 
