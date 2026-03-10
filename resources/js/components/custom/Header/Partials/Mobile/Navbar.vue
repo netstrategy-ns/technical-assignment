@@ -62,13 +62,13 @@ const navLinkClass =
           </Link>
           <SheetTitle class="sr-only">Menu di navigazione</SheetTitle>
         </SheetHeader>
-        <nav class="mt-6 flex flex-1 flex-col gap-1" aria-label="Navigazione principale">
+        <nav class="mt-6 flex w-full flex-1 flex-col gap-1" aria-label="Navigazione principale">
           <Link href="/" :class="navLinkClass">Home</Link>
           <Link :href="eventsIndex" :class="navLinkClass">Eventi</Link>
 
           <template v-if="user">
             <Link :href="ordersIndex" :class="navLinkClass">I miei ordini</Link>
-            <div class="mt-auto border-t border-sidebar-border/70 pt-4">
+            <div class="mt-auto border-t border-sidebar-border/70">
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                   <Button variant="outline" class="w-full justify-start">
@@ -80,9 +80,9 @@ const navLinkClass =
                   align="end"
                     side="top"
                     :side-offset="0"
-                    class="w-full rounded-xl"
+                    class="w-(--reka-dropdown-menu-trigger-width) max-w-full rounded-xl"
                 >
-                  <UserDropdownContent :user="user" />
+                  <UserDropdownContent :user="user" class="w-full" />
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
