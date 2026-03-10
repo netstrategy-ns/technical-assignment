@@ -25,7 +25,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('cart/hold/{hold}', [HoldController::class, 'update'])->name('cart.holds.update');
     Route::delete('cart/hold/{hold}', [HoldController::class, 'destroy'])->name('cart.holds.destroy');
     Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 });
+
+Route::middleware(['auth', 'verified', 'admin'])->get('/dashboard', function (): \Illuminate\Http\RedirectResponse {
+    return redirect()->route('admin.dashboard');
+})->name('dashboard');
 
 require __DIR__.'/settings.php';

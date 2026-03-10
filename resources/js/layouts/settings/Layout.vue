@@ -1,32 +1,32 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
-import { edit as editAppearance } from '@/routes/appearance';
-import { edit as editProfile } from '@/routes/profile';
-import { show } from '@/routes/two-factor';
-import { edit as editPassword } from '@/routes/user-password';
+
+const page = usePage();
+const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: editProfile(),
+        href: urls.value.settingsProfile ?? '/user/settings/profile',
     },
     {
         title: 'Password',
-        href: editPassword(),
+        href: urls.value.settingsPassword ?? '/user/settings/password',
     },
     {
         title: 'Two-Factor Auth',
-        href: show(),
+        href: urls.value.settingsTwoFactor ?? '/user/settings/two-factor',
     },
     {
         title: 'Appearance',
-        href: editAppearance(),
+        href: urls.value.settingsAppearance ?? '/user/settings/appearance',
     },
 ];
 
@@ -67,7 +67,7 @@ const { isCurrentUrl } = useCurrentUrl();
             <Separator class="my-6 lg:hidden" />
 
             <div class="flex-1 md:max-w-2xl">
-                <section class="max-w-xl space-y-12">
+                <section class="max-w-xl space-y-6">
                     <slot />
                 </section>
             </div>

@@ -5,11 +5,11 @@ import EventCard from '@/components/custom/Cards/EventCard.vue';
 import EventFilters from '@/components/custom/Filters/EventFilters.vue';
 import PaginationNav from '@/components/custom/Pagination/PaginationNav.vue';
 import PerPageSelect from '@/components/custom/Pagination/PerPageSelect.vue';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 import type { EventCardEvent, EventFiltersState } from '@/composables/useEvents';
 import type { PerPageOption } from '@/composables/usePagination';
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS, usePagination } from '@/composables/usePagination';
 import FrontendLayout from '@/layouts/FrontendLayout.vue';
-import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
@@ -31,7 +31,7 @@ const props = defineProps<{
     activeCategory?: { id: number; name: string; slug: string } | null;
 }>();
 
-const { onPerPageChange } = usePagination(() => props.events);
+const { onPerPageChange } = usePagination();
 
 const effectivePerPage = computed(() => {
     const p = props.events.per_page;

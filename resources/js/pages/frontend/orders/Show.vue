@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
-import { useFormatData } from '@/composables/useFormatData';
+import { useFormatData } from "@/composables/useFormatData";
 import FrontendLayout from "@/layouts/FrontendLayout.vue";
 
 defineProps<{
@@ -29,7 +29,7 @@ defineProps<{
   };
 }>();
 
-const { formatPrice, statusLabel } = useFormatData();
+const { formatPrice, statusLabel, formatDate } = useFormatData();
 
 const subtotalByItem = (item: { quantity: number; unit_price: string }) =>
   Number(item.unit_price) * item.quantity;
@@ -60,13 +60,30 @@ const subtotalByItem = (item: { quantity: number; unit_price: string }) =>
         <section
           class="mt-6 rounded-xl border border-sidebar-border/70 bg-card p-4 sm:p-6"
         >
-          <h2 class="text-lg font-medium">Biglietti</h2>
+          <h2 class="text-lg font-medium">Biglietti acquistati</h2>
           <ul class="mt-4 space-y-3">
             <li
               v-for="item in order.order_items"
               :key="item.id"
               class="rounded-lg border border-sidebar-border/50 bg-card/40 p-3"
             >
+              <div class="my-3 flex flex-wrap justify-between gap-4 text-sm">
+                <span>Data acquisto: {{ formatDate(order.created_at) }}</span>
+                <span
+                  >Stato:
+                  <span
+                    class="font-medium text-white rounded-full px-2 py-1"
+                    :class="
+                      order.status === 'completed'
+                        ? 'bg-green-600'
+                        : order.status === 'pending'
+                        ? 'bg-yellow-500'
+                        : 'bg-red-500'
+                    "
+                    >{{ statusLabel(order.status) }}</span
+                  ></span
+                >
+              </div>
               <p class="font-medium">{{ item.ticket.ticket_type.name }}</p>
               <div
                 class="flex flex-wrap gap-4 md:gap-0 justify-between items-center text-sm text-muted-foreground"
@@ -84,8 +101,9 @@ const subtotalByItem = (item: { quantity: number; unit_price: string }) =>
                   <span>Prezzo unitario: {{ formatPrice(item.unit_price) }}</span>
                 </div>
               </div>
+
               <hr class="mt-6 mb-2 border-sidebar-border/70" />
-              <div class="mt-2 flex justify-between gap-4 text-sm">
+              <div class="mt-2 flex flex-wrap justify-between gap-4 text-sm">
                 <span>Quantità: {{ item.quantity }}</span>
                 <p class="mt-1 text-sm text-primary font-medium">
                   Subtotale: {{ formatPrice(subtotalByItem(item)) }}

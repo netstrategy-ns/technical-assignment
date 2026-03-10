@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import CartDropdown from '../CartDropdown.vue';
+import ProfileAvatar from '@/components/custom/UserProfile/ProfileAvatar.vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuthRedirect } from '@/composables/useAuthRedirect';
+import type { User } from '@/types';
+import CartDropdown from '../CartDropdown.vue';
+import UserDropdownContent from '../UserDropdownContent.vue';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
 const eventsIndex = computed(() => urls.value.eventsIndex ?? '/events');
-const canRegister = computed(() => (page.props.canRegister as boolean) ?? true);
-const user = computed(() => (page.props.auth as { user?: unknown })?.user);
 const ordersIndex = computed(() => urls.value.orders ?? '/orders');
-const adminDashboard = computed(() => (urls.value as Record<string, string>).adminDashboard ?? '/admin/dashboard');
-const canAccessAdmin = computed(() => Boolean((page.props.auth as { canAccessAdmin?: boolean })?.canAccessAdmin));
+const canRegister = computed(() => (page.props.canRegister as boolean) ?? true);
+const user = computed(() => (page.props.auth as { user?: User })?.user);
 const { storeCurrent } = useAuthRedirect();
 
 const setLoginRedirect = (): void => {
@@ -37,22 +43,38 @@ const setRegisterRedirect = (): void => {
         >
             Eventi
         </Link>
-        <CartDropdown v-if="user" />
+        <Link
+            v-if="user"
+            :href="ordersIndex"
+            class="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+            I miei ordini
+        </Link>
+
         <template v-if="user">
-            <Link
-                :href="ordersIndex"
-                class="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-                I miei ordini
-            </Link>
-            <Link
-                v-if="canAccessAdmin"
-                :href="adminDashboard"
-                class="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-                Dashboard
-            </Link>
+            <CartDropdown />
+
+            <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                    <button
+                        type="button"
+                        class="rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        aria-label="Apri menu profilo"
+                    >
+                        <ProfileAvatar :user="user" />
+                    </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                    align="end"
+                    :side-offset="10"
+                    class="w-64 rounded-xl"
+                >
+                    <UserDropdownContent :user="user" />
+                </DropdownMenuContent>
+            </DropdownMenu>
         </template>
+
         <template v-else>
             <Link
                 href="/login"

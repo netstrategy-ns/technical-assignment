@@ -2,6 +2,7 @@
 import { Head, usePage } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import TicketsCard from "@/components/custom/Cards/TicketsCard.vue";
+import { useAuthRedirect } from "@/composables/useAuthRedirect";
 import {
   useCartExpirationAutoRefresh,
   useCartHoldExpiredEvent,
@@ -9,7 +10,6 @@ import {
 import type { QueueEvent, QueueStatus } from "@/composables/useEventQueue";
 import { useEventQueue } from "@/composables/useEventQueue";
 import FrontendLayout from "@/layouts/FrontendLayout.vue";
-import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 type ShowEvent = QueueEvent;
 
