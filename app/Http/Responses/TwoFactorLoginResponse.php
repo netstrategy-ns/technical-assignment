@@ -56,7 +56,12 @@ class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
         }
 
         $parsed = parse_url($redirect);
-        if ($parsed === false || !array_key_exists('path', $parsed)) {
+        if (
+            $parsed === false ||
+            !array_key_exists('path', $parsed) ||
+            array_key_exists('scheme', $parsed) ||
+            array_key_exists('host', $parsed)
+        ) {
             return null;
         }
 
