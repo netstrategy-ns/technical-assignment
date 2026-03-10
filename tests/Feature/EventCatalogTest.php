@@ -45,7 +45,7 @@ describe('Catalogo eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/home/Index')
+            ->component('app/home/Index')
             ->has('featuredEvents')
             ->has('canRegister')
         );
@@ -56,7 +56,7 @@ describe('Catalogo eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->has('events')
             ->has('events.data')
             ->has('filters')
@@ -68,7 +68,7 @@ describe('Catalogo eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->where('filters.featured', true)
         );
     });
@@ -81,7 +81,7 @@ describe('Catalogo eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Show')
+            ->component('app/events/Show')
             ->has('event')
             ->has('saleNotStarted')
         );
@@ -119,7 +119,7 @@ describe('Ricerca e filtri eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->has('events.data')
             ->where('filters.search', 'Rock Unico')
         );
@@ -144,7 +144,7 @@ describe('Ricerca e filtri eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->has('events.data')
             ->where('filters.category', $category->slug)
         );
@@ -173,7 +173,7 @@ describe('Ricerca e filtri eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->has('events.data')
         );
         $filters = $response->inertiaProps('filters');
@@ -193,7 +193,7 @@ describe('Ricerca e filtri eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->has('events.data')
             ->where('filters.location', 'Filtro Test')
         );
@@ -211,7 +211,7 @@ describe('Ricerca e filtri eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->where('filters.sort', 'date_asc')
         );
         $data = $response->inertiaProps('events')['data'];
@@ -266,7 +266,7 @@ describe('Ricerca e filtri eventi', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/events/Index')
+            ->component('app/events/Index')
             ->has('events.data')
             ->has('filters')
         );

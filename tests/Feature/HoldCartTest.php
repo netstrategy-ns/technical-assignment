@@ -193,7 +193,7 @@ describe('Controllo disponibilità e carrello', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/cart/Index')
+            ->component('app/cart/Index')
             ->has('cart.items', 1)
             ->where('cart.items.0.ticket.id', $ticket->id)
             ->where('cart.items.0.event.slug', $event->slug)

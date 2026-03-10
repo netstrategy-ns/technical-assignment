@@ -36,7 +36,7 @@ class HomeController extends Controller
             ->values()
             ->all();
 
-        return Inertia::render('frontend/home/Index', [
+        return Inertia::render('app/home/Index', [
             'featuredEvents' => $featuredEvents,
             'eventsByCategory' => $categoriesWithEvents,
             'canRegister' => Features::enabled(Features::registration()),

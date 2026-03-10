@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
 import { useFormatData } from "@/composables/useFormatData";
-import FrontendLayout from "@/layouts/FrontendLayout.vue";
+import ApplicationLayout from "@/layouts/ApplicationLayout.vue";
 
 defineProps<{
   orders: Array<{
@@ -18,7 +18,7 @@ const { formatPrice, statusLabel, formatDate } = useFormatData();
 </script>
 
 <template>
-  <FrontendLayout>
+  <ApplicationLayout>
     <Head title="I miei ordini" />
     <div class="w-full px-4 py-8">
       <div class="mx-auto max-w-4xl">
@@ -87,5 +87,5 @@ const { formatPrice, statusLabel, formatDate } = useFormatData();
         </ul>
       </div>
     </div>
-  </FrontendLayout>
+  </ApplicationLayout>
 </template>

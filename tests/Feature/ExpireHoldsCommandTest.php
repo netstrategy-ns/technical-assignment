@@ -193,7 +193,7 @@ describe('Expired holds and cart payload', function (): void {
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/cart/Index')
+            ->component('app/cart/Index')
             ->has('cart.items', 0)
         );
 

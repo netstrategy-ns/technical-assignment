@@ -28,7 +28,7 @@ class OrderController extends Controller
                 'created_at' => $order->created_at?->toIso8601String(),
             ]);
 
-        return Inertia::render('frontend/orders/Index', [
+        return Inertia::render('app/orders/Index', [
             'orders' => $orders,
             'totalOrders' => $orders->count(),
         ]);
@@ -59,7 +59,7 @@ class OrderController extends Controller
 
         $order->load('orderItems.ticket.ticketType.event');
 
-        return Inertia::render('frontend/orders/Show', [
+        return Inertia::render('app/orders/Show', [
             'order' => $order->toArray(),
         ]);
     }

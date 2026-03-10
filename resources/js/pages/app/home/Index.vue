@@ -3,7 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import CategoryEventsSlider from '@/components/custom/Sliders/CategoryEventsSlider.vue';
 import HeroEventsSlider from '@/components/custom/Sliders/HeroEventsSlider.vue';
-import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 const page = usePage();
@@ -45,7 +45,7 @@ withDefaults(
 </script>
 
 <template>
-    <FrontendLayout>
+    <ApplicationLayout>
         <Head title="Home" />
         <div class="w-full">
             <div v-if="!featuredEvents?.length" class="rounded-lg border border-sidebar-border/70 bg-card p-8 text-center text-muted-foreground">
@@ -74,5 +74,5 @@ withDefaults(
                 </Link>
             </section>
         </div>
-    </FrontendLayout>
+    </ApplicationLayout>
 </template>

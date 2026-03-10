@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { useCheckout } from '@/composables/useCheckout';
-import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 
 const {
     cart,
@@ -18,7 +18,7 @@ const {
 </script>
 
 <template>
-    <FrontendLayout>
+    <ApplicationLayout>
         <Head title="Checkout" />
         <div class="w-full px-4 py-8">
             <div class="mx-auto max-w-3xl">
@@ -105,5 +105,5 @@ const {
                 </template>
             </div>
         </div>
-    </FrontendLayout>
+    </ApplicationLayout>
 </template>

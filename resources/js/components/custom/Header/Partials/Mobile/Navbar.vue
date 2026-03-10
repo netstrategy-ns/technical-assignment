@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { Link, usePage } from "@inertiajs/vue3";
-import { computed } from "vue";
 import { Menu, UserRound } from "lucide-vue-next";
+import { computed } from "vue";
 import AppLogo from "@/components/AppLogo.vue";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -11,15 +16,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import CartDropdown from "../CartDropdown.vue";
 import { useAuthRedirect } from "@/composables/useAuthRedirect";
-import UserDropdownContent from "../UserDropdownContent.vue";
 import type { User } from "@/types";
+import CartDropdown from "../CartDropdown.vue";
+import UserDropdownContent from "../UserDropdownContent.vue";
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});

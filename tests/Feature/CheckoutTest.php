@@ -205,7 +205,7 @@ describe('Checkout', function (): void {
         get($orderUrl)
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('frontend/orders/Show')
+                ->component('app/orders/Show')
                 ->has('order')
                 ->where('order.id', $order->id)
             );
@@ -290,7 +290,7 @@ describe('Checkout', function (): void {
         get('/orders')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('frontend/orders/Index')
+                ->component('app/orders/Index')
                 ->has('orders')
                 ->has('totalOrders')
                 ->where('totalOrders', 1)
@@ -344,7 +344,7 @@ describe('Checkout', function (): void {
 
         $response = get('/cart');
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('frontend/cart/Index')
+            ->component('app/cart/Index')
             ->has('cart.items', 0)
         );
     });

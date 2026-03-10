@@ -5,7 +5,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart, useCartAutoRefresh, useCartExpirationAutoRefresh, useCartHoldExpiredEvent } from '@/composables/useCart';
 import { useFormatData } from '@/composables/useFormatData';
-import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
@@ -184,7 +184,7 @@ const incrementQuantity = (
 </script>
 
 <template>
-    <FrontendLayout>
+    <ApplicationLayout>
         <Head title="Carrello" />
         <div class="w-full px-4 py-8">
             <div class="mx-auto max-w-3xl">
@@ -327,5 +327,5 @@ const incrementQuantity = (
                 </template>
             </div>
         </div>
-    </FrontendLayout>
+    </ApplicationLayout>
 </template>

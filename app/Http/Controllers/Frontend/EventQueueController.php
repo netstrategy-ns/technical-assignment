@@ -41,7 +41,7 @@ class EventQueueController extends Controller
         $status = $queueService->getQueueStatus($request->user(), $event);
         $eventResource = new EventShowResource($event);
 
-        return Inertia::render('frontend/events/Show', [
+        return Inertia::render('app/events/Show', [
             'event' => $eventResource->resolve($request),
             'saleNotStarted' => $event->isSaleNotStarted(),
             'queueStatus' => $status,

@@ -11,7 +11,7 @@ class CartController extends Controller
 {
     public function index(Request $request): Response
     {
-        return Inertia::render('frontend/cart/Index', [
+        return Inertia::render('app/cart/Index', [
             'cart' => app(\App\Services\CartHoldService::class)->buildCartPayload($request->user()),
         ]);
     }

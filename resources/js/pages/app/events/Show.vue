@@ -9,7 +9,7 @@ import {
 } from "@/composables/useCart";
 import type { QueueEvent, QueueStatus } from "@/composables/useEventQueue";
 import { useEventQueue } from "@/composables/useEventQueue";
-import FrontendLayout from "@/layouts/FrontendLayout.vue";
+import ApplicationLayout from "@/layouts/ApplicationLayout.vue";
 
 type ShowEvent = QueueEvent;
 
@@ -63,7 +63,7 @@ useCartHoldExpiredEvent(refreshEventAndCart);
 </script>
 
 <template>
-  <FrontendLayout>
+  <ApplicationLayout>
     <Head :title="currentEvent?.title ?? 'Dettaglio evento'" />
     <div class="w-full px-4 py-8">
       <article v-if="currentEvent" class="w-full">
@@ -171,5 +171,5 @@ useCartHoldExpiredEvent(refreshEventAndCart);
         />
       </article>
     </div>
-  </FrontendLayout>
+  </ApplicationLayout>
 </template>

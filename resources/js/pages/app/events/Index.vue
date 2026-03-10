@@ -9,7 +9,7 @@ import { useAuthRedirect } from '@/composables/useAuthRedirect';
 import type { EventCardEvent, EventFiltersState } from '@/composables/useEvents';
 import type { PerPageOption } from '@/composables/usePagination';
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS, usePagination } from '@/composables/usePagination';
-import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 
 const page = usePage();
 const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
@@ -40,7 +40,7 @@ const effectivePerPage = computed(() => {
 </script>
 
 <template>
-    <FrontendLayout>
+    <ApplicationLayout>
         <Head title="Eventi" />
         <div class="w-full px-4 py-8">
             <h1 class="mb-4 text-2xl font-semibold">
@@ -74,5 +74,5 @@ const effectivePerPage = computed(() => {
             </div>
             <PaginationNav v-if="events.last_page > 1" :pagination="events" class="mt-8" />
         </div>
-    </FrontendLayout>
+    </ApplicationLayout>
 </template>

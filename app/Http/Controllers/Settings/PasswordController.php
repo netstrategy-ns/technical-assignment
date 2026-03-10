@@ -17,7 +17,7 @@ class PasswordController extends Controller
     {
         $component = request()->user()?->isAdmin()
             ? 'admin/user/Profile'
-            : 'frontend/user/Profile';
+            : 'app/user/Profile';
 
         return Inertia::render($component);
     }

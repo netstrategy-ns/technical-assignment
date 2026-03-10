@@ -7,7 +7,7 @@ import PasswordContent from '@/components/custom/UserProfile/PasswordContent.vue
 import ProfileAvatar from '@/components/custom/UserProfile/ProfileAvatar.vue';
 import ProfileContent from '@/components/custom/UserProfile/ProfileContent.vue';
 import TwoFactorContent from '@/components/custom/UserProfile/TwoFactorContent.vue';
-import AppLayout from '@/layouts/AppLayout.vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import type { BreadcrumbItem, User } from '@/types';
 
@@ -78,7 +78,7 @@ const activeSection = computed(() => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AdminLayout :breadcrumbs="breadcrumbs">
         <Head title="Profilo utente" />
 
         <h1 class="sr-only">Profilo utente (amministratore)</h1>
@@ -157,5 +157,5 @@ const activeSection = computed(() => {
                 </section>
             </template>
         </SettingsLayout>
-    </AppLayout>
+    </AdminLayout>
 </template>

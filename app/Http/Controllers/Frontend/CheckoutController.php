@@ -15,7 +15,7 @@ class CheckoutController extends Controller
 {
     public function index(Request $request, CartHoldService $cartHoldService): Response
     {
-        return Inertia::render('frontend/checkout/Index', [
+        return Inertia::render('app/checkout/Index', [
             'cart' => $cartHoldService->buildCartPayload($request->user()),
         ]);
     }

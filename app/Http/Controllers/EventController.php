@@ -33,7 +33,7 @@ class EventController extends Controller
                 ->firstWhere('slug', $filters['category'])?->only(['id', 'name', 'slug']);
         }
 
-        return Inertia::render('frontend/events/Index', [
+        return Inertia::render('app/events/Index', [
             'events' => $events,
             'categories' => $categories,
             'filters' => $filters,
@@ -56,7 +56,7 @@ class EventController extends Controller
         ]);
         $resource = new EventShowResource($event);
         $queueStatus = $request->user() === null ? null : $queueService->getQueueStatus($request->user(), $event);
-        return Inertia::render('frontend/events/Show', [
+        return Inertia::render('app/events/Show', [
             'event' => $resource->resolve(request()),
             'saleNotStarted' => $event->isSaleNotStarted(),
             'queueStatus' => $queueStatus,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
 import { useFormatData } from "@/composables/useFormatData";
-import FrontendLayout from "@/layouts/FrontendLayout.vue";
+import ApplicationLayout from "@/layouts/ApplicationLayout.vue";
 
 defineProps<{
   order: {
@@ -36,7 +36,7 @@ const subtotalByItem = (item: { quantity: number; unit_price: string }) =>
 </script>
 
 <template>
-  <FrontendLayout>
+  <ApplicationLayout>
     <Head :title="`Ordine #${order.id}`" />
     <div class="w-full px-4 py-8">
       <div class="mx-auto max-w-3xl">
@@ -122,5 +122,5 @@ const subtotalByItem = (item: { quantity: number; unit_price: string }) =>
         </section>
       </div>
     </div>
-  </FrontendLayout>
+  </ApplicationLayout>
 </template>

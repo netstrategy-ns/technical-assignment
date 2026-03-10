@@ -9,8 +9,8 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
-import { logout } from '@/routes';
 import type { User } from '@/types';
+import { logout } from '@/routes';
 
 type Props = {
     user: User;

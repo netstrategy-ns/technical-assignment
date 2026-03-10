@@ -7,7 +7,7 @@ import PasswordContent from '@/components/custom/UserProfile/PasswordContent.vue
 import ProfileAvatar from '@/components/custom/UserProfile/ProfileAvatar.vue';
 import ProfileContent from '@/components/custom/UserProfile/ProfileContent.vue';
 import TwoFactorContent from '@/components/custom/UserProfile/TwoFactorContent.vue';
-import FrontendLayout from '@/layouts/FrontendLayout.vue';
+import ApplicationLayout from '@/layouts/ApplicationLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import type { User } from '@/types';
 
@@ -67,7 +67,7 @@ const activeSection = computed(() => {
 </script>
 
 <template>
-    <FrontendLayout>
+    <ApplicationLayout>
         <Head title="Area utente" />
 
         <div class="w-full px-4 py-8">
@@ -150,5 +150,5 @@ const activeSection = computed(() => {
                 </SettingsLayout>
             </div>
         </div>
-    </FrontendLayout>
+    </ApplicationLayout>
 </template>
