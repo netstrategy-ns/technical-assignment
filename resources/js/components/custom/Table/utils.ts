@@ -26,6 +26,15 @@ export function formatCellValue(value: unknown, column: TableColumn): string {
         return '-';
     }
 
+    if (Array.isArray(column.options) && column.options.length > 0) {
+        const optionValue = String(value);
+        const option = column.options.find((item) => String(item.value) === optionValue);
+
+        if (option?.label !== undefined) {
+            return option.label;
+        }
+    }
+
     if (column.cast_type === 'boolean') {
         return value ? 'Sì' : 'No';
     }

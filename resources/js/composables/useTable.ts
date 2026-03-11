@@ -80,6 +80,20 @@ export const useTableFilters = (
             return;
         }
 
+        const hasTextFilterWithTrailingSpace = filterableColumns.value.some((column) => {
+            const value = localFilters[column.field_name];
+
+            if (typeof value !== 'string') {
+                return false;
+            }
+
+            return value.endsWith(' ');
+        });
+
+        if (hasTextFilterWithTrailingSpace) {
+            return;
+        }
+
         emitFiltersTimeout.value = setTimeout(() => {
             emitFiltersTimeout.value = null;
             normalizeAndEmit();
@@ -264,8 +278,9 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
         }
 
         router.get(baseUrl.value, payload, {
-            preserveState: false,
+            preserveState: true,
             preserveScroll: true,
+            preserveFocus: true,
             replace: true,
         });
     };

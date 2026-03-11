@@ -63,7 +63,9 @@ const onFilterUpdate = (filters: TableFiltersState): void => {
             @update:modelValue="onFilterUpdate"
         />
 
-        <slot name="controls" />
+        <slot name="controls-top">
+            <slot name="controls" />
+        </slot>
 
         <div class="overflow-x-auto">
             <table class="w-max min-w-full table-auto border p-6">
@@ -79,6 +81,10 @@ const onFilterUpdate = (filters: TableFiltersState): void => {
                     :has-actions="hasActions"
                     :loading="loading"
                 >
+                    <template v-if="$slots.row" #row="slotProps">
+                        <slot name="row" v-bind="slotProps" />
+                    </template>
+
                     <template #actions="props">
                         <slot name="actions" v-bind="props" />
                     </template>
@@ -92,5 +98,7 @@ const onFilterUpdate = (filters: TableFiltersState): void => {
         >
             {{ emptyMessage }}
         </div>
+
+        <slot name="controls-bottom" />
     </div>
 </template>

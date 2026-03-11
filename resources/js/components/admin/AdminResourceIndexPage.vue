@@ -71,10 +71,10 @@ const {
 
       <div class="px-6 py-4 border-b border-border">
         <Table
-                class="rounded-none"
+          class="rounded-none"
           :columns="tableColumns"
           :rows="tableRows"
-                :sort="tableSort"
+          :sort="tableSort"
           :filters="tableFilters"
           :has-actions="hasActions"
           :loading="false"
@@ -82,8 +82,14 @@ const {
           @update:filters="onFiltersUpdate"
           @update:sort="onSortUpdate"
         >
-          <template #controls>
-            <div class="flex items-center justify-end bg-white px-6">
+          <template #controls-top>
+            <div class="flex items-center justify-between gap-3 bg-white px-6">
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-muted-foreground">
+                  Totale: {{ tablePagination.total }} risultati
+                </span>
+                <PaginationNav :pagination="tablePagination" />
+              </div>
               <PerPageSelect
                 v-model="perPage"
                 :options="PER_PAGE_OPTIONS"
@@ -91,6 +97,25 @@ const {
                 @update:modelValue="onPerPageUpdate"
               />
             </div>
+          </template>
+          <template #controls-bottom>
+            <div class="flex items-center justify-between gap-3 bg-white px-6">
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-muted-foreground">
+                  Totale: {{ tablePagination.total }} risultati
+                </span>
+                <PaginationNav :pagination="tablePagination" />
+              </div>
+              <PerPageSelect
+                v-model="perPage"
+                :options="PER_PAGE_OPTIONS"
+                label-before="Elementi per pagina"
+                @update:modelValue="onPerPageUpdate"
+              />
+            </div>
+          </template>
+          <template v-if="slots.row" #row="slotProps">
+            <slot name="row" v-bind="slotProps" />
           </template>
           <template #actions="slotProps">
             <slot name="actions" v-bind="slotProps">
@@ -121,9 +146,6 @@ const {
             </slot>
           </template>
         </Table>
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-6">
-          <PaginationNav :pagination="tablePagination" />
-        </div>
       </div>
     </div>
   </AdminLayout>

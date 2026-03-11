@@ -93,7 +93,14 @@ const getInputModelValue = (column: TableColumn): string | number | undefined =>
             <select
                 v-if="isSelectColumn(column)"
                 :id="`${props.idPrefix}-${column.field_name}`"
-                class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                class="h-9 w-full rounded-md border border-input bg-background px-3 text-left text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                :class="
+                    getInputModelValue(column) === '' ||
+                    getInputModelValue(column) === undefined ||
+                    getInputModelValue(column) === null
+                        ? 'text-muted-foreground'
+                        : 'text-foreground'
+                "
                 :value="getInputModelValue(column)"
                 @change="onInput(column, ($event.target as HTMLSelectElement).value)"
                 @blur="commitFilters"
