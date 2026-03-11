@@ -42,6 +42,7 @@ class Order extends Model
         ];
     }
     
+    // Usa public_id come identificatore di rotta dell'ordine
     public function getRouteKeyName(): string
     {
         return 'public_id';
@@ -54,6 +55,7 @@ class Order extends Model
         return OrderTableColumns::columns();
     }
     
+    // Imposta automaticamente un UUID pubblico quando manca in creazione
     protected static function booted(): void
     {
         static::creating(function (Order $order): void {
@@ -69,16 +71,19 @@ class Order extends Model
      * ------------------------------------------------------------
      */
 
+    // Relazione utente che ha effettuato l'ordine
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    // Relazione alle righe ordine (ticket acquistati)
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    // Ritorna i titoli degli eventi dell'ordine, unici e concatenati
     public function getEventTitlesAttribute(): string
     {
         return $this->orderItems
@@ -88,6 +93,7 @@ class Order extends Model
             ->implode(', ');
     }
 
+    // Ritorna le categorie degli eventi dell'ordine, uniche e concatenate
     public function getEventCategoriesAttribute(): string
     {
         return $this->orderItems

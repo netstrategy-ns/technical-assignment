@@ -31,16 +31,19 @@ class Hold extends Model
         ];
     }
 
+    // Relazione utente proprietario del trattenimento
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    // Relazione al ticket associato al trattenimento
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
     }
 
+    // Verifica se l'hold è valido: stato attivo + scadenza nel futuro
     public function isValid(): bool
     {
         return $this->status === HoldStatusEnum::ACTIVE
@@ -48,6 +51,7 @@ class Hold extends Model
             && $this->expires_at->isFuture();
     }
 
+    // Verifica se l'hold risulta non valido (scaduto o non attivo)
     public function isExpired(): bool
     {
         return ! $this->isValid();

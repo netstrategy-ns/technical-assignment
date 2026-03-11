@@ -79,12 +79,14 @@ class User extends Authenticatable
      * 
      */
 
-     public function holds(): HasMany
+    // Relazione agli hold creati dall'utente
+    public function holds(): HasMany
      {
          return $this->hasMany(Hold::class);
      }
  
-     public function orders(): HasMany
+    // Relazione agli ordini creati dall'utente
+    public function orders(): HasMany
      {
          return $this->hasMany(Order::class);
      }
@@ -95,6 +97,7 @@ class User extends Authenticatable
      * ------------------------------------------------------------
      */
 
+    // Indica se l'utente ha flag amministratore attiva
     public function isAdmin(): bool
     {
         return $this->is_admin === true;

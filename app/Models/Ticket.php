@@ -61,21 +61,25 @@ class Ticket extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    // Relazione agli hold legati a questo ticket
     public function holds(): HasMany
     {
         return $this->hasMany(Hold::class);
     }
 
+    // Restituisce il titolo evento del ticket
     public function getEventTitleAttribute(): ?string
     {
         return $this->ticketType?->event?->title;
     }
 
+    // Restituisce la data dell'evento in formato d/m/Y
     public function getEventDateAttribute(): ?string
     {
         return $this->ticketType?->event?->starts_at?->format('d/m/Y');
     }
 
+    // Calcola disponibilità come quota meno quantità già acquistata
     public function getAvailabilityAttribute(): int
     {
         $quota = (int) ($this->ticketType?->quota?->quantity ?? 0);
@@ -86,6 +90,7 @@ class Ticket extends Model
 
     
 
+    // Calcola i pezzi venduti con ordini in stato COMPLETED
     public function soldQuantity(): int
     {
         return (int) $this->orderItems()
@@ -93,6 +98,7 @@ class Ticket extends Model
             ->sum('quantity');
     }
 
+    // Calcola la quantità trattenuta da hold attivi, eventualmente escludendo un hold
     public function validHeldQuantity(?int $excludingHoldId = null): int
     {
         return (int) $this->holds()
@@ -105,6 +111,7 @@ class Ticket extends Model
             ->sum('quantity');
     }
 
+    // Restituisce la disponibilità calcolata delegando al ticket type
     public function getAvailableQuantity(?int $excludingHoldId = null): int
     {
         return max(0, (int) $this->ticketType?->getAvailableQuantity($excludingHoldId));

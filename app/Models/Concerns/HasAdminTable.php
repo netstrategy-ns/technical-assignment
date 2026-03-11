@@ -7,18 +7,22 @@ use Illuminate\Support\Str;
 
 trait HasAdminTable
 {
+    // I modelli devono esporre la configurazione colonne della tabella admin
     abstract public static function tableColumns(): array;
 
+    // Restituisce la mappa scope per i filtri sulla base delle colonne
     public static function tableFilterScopes(): array
     {
         return static::buildTableScopeMap('filter');
     }
 
+    // Restituisce la mappa scope per gli ordinamenti sulla base delle colonne
     public static function tableSortScopes(): array
     {
         return static::buildTableScopeMap('sort');
     }
 
+    // Costruisce la mappa field=>scope per operazioni filter/sort
     protected static function buildTableScopeMap(string $operation): array
     {
         $scopePrefix = $operation === 'sort' ? 'sortBy' : 'filterBy';
@@ -41,6 +45,7 @@ trait HasAdminTable
         return $map;
     }
 
+    // Trova la prima scope disponibile partendo dai segmenti del field_name
     protected static function resolveTableScopeForField(string $fieldName, string $scopePrefix): ?string
     {
         $segments = array_filter(explode('.', $fieldName), fn (string $segment): bool => $segment !== '');
@@ -59,6 +64,7 @@ trait HasAdminTable
         return null;
     }
 
+    // Converte segmenti snake_case in nome Studly per il matching della scope
     protected static function toStudlyParts(array $parts): string
     {
         $studied = array_map(
@@ -72,6 +78,7 @@ trait HasAdminTable
         return implode('', $studied);
     }
 
+    // Estrae solo le colonne dichiarate come filtrabili
     public static function tableFilterableColumns(): array
     {
         return array_values(array_filter(
@@ -80,6 +87,7 @@ trait HasAdminTable
         ));
     }
 
+    // Estrae solo le colonne dichiarate come ordinabili
     public static function tableSortableColumns(): array
     {
         return array_values(array_filter(
@@ -88,6 +96,7 @@ trait HasAdminTable
         ));
     }
 
+    // Restituisce la prima sort di default definita sulle colonne, se presente
     public static function tableDefaultSort(): ?array
     {
         foreach (static::tableColumns() as $column) {
@@ -104,11 +113,13 @@ trait HasAdminTable
         return null;
     }
 
+    // Converte i field_name con dot notation nella chiave request equivalente
     public static function tableFilterRequestKey(string $fieldName): string
     {
         return str_replace('.', '__', $fieldName);
     }
 
+    // Normalizza i valori dei filtri (boolean, numeri, null, array) da payload
     public static function normalizeTableFilterValue(mixed $value): mixed
     {
         if (is_array($value)) {
@@ -158,6 +169,7 @@ trait HasAdminTable
         return $value;
     }
 
+    // Estrae dal payload solo filtri validi e normalizzati da applicare
     public static function requestedTableFilters(array $payload): array
     {
         $filters = [];
@@ -185,6 +197,7 @@ trait HasAdminTable
         return $filters;
     }
 
+    // Applica i filtri validi invocando dinamicamente gli scope Eloquent
     public static function applyTableFilters(Builder $query, array $payload): Builder
     {
         $filters = static::requestedTableFilters($payload);
@@ -207,6 +220,7 @@ trait HasAdminTable
         return $query;
     }
 
+    // Legge il sort dal payload e lo valida su sort e sort_dir
     public static function parseTableSort(array $payload): array
     {
         $defaultSort = static::tableDefaultSort();
@@ -236,6 +250,7 @@ trait HasAdminTable
         ];
     }
 
+    // Applica l'ordinamento richiesto via scope dedicata o fallback orderBy
     public static function applyTableSort(Builder $query, string $field, string $dir): Builder
     {
         $direction = strtolower($dir) === 'desc' ? 'desc' : 'asc';

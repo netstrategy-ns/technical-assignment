@@ -69,7 +69,7 @@ class Event extends Model
      * ------------------------------------------------------------
      */
 
-    /** @return BelongsTo<EventCategory, $this> */
+    // Relazione per categoria evento
     public function category(): BelongsTo
     {
         return $this->belongsTo(EventCategory::class, 'event_category_id');
@@ -105,12 +105,13 @@ class Event extends Model
         return $this->hasMany(QueueEntry::class);
     }
 
-    
+    // Metodo per verificare se la coda è abilitata
     public function isQueueEnabled(): bool
     {
         return (bool) $this->queue_enabled;
     }
 
+    // Metodo per ottenere il numero massimo di concorrenti per la coda
     public function getQueueMaxConcurrent(): int
     {
         $queueConfig = is_array($this->queue_config) ? $this->queue_config : [];
@@ -118,6 +119,7 @@ class Event extends Model
         return max(1, (int) ($queueConfig['max_concurrent'] ?? 1));
     }
 
+    // Metodo per ottenere la durata della coda in minuti
     public function getQueueDurationMinutes(): int
     {
         $queueConfig = is_array($this->queue_config) ? $this->queue_config : [];
@@ -125,8 +127,7 @@ class Event extends Model
         return max(1, (int) ($queueConfig['duration_minutes'] ?? 10));
     }
 
-
-    
+    // Metodo per verificare se la prevendita non è iniziata
     public function isSaleNotStarted(): bool
     {
         return (bool) ($this->sale_starts_at?->isFuture());

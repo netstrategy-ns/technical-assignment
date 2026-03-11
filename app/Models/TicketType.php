@@ -77,6 +77,7 @@ class TicketType extends Model
      * HELPER METHODS
      * ------------------------------------------------------------
      */
+    // Calcola quanti ticket sono disponibili tenendo conto di vendite e hold validi
     public function getAvailableQuantity(?int $excludingHoldId = null): int
     {
         $quota = (int) ($this->quota?->quantity ?? 0);
