@@ -21,6 +21,16 @@ trait SortScopes
             ->select('tickets.*');
     }
 
+    // Ordina ticket per evento
+    public function scopeSortByEventTitle(Builder $query, string $direction = 'asc'): Builder
+    {
+        return $query
+            ->leftJoin('ticket_types as tt', 'tt.id', '=', 'tickets.ticket_type_id')
+            ->leftJoin('events as e', 'e.id', '=', 'tt.event_id')
+            ->orderBy('e.title', $direction)
+            ->select('tickets.*');
+    }
+
     // Ordina ticket per prezzo
     public function scopeSortByPrice(Builder $query, string $direction = 'asc'): Builder
     {

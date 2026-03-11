@@ -48,6 +48,23 @@ export function formatCellValue(value: unknown, column: TableColumn): string {
         return date.toLocaleString('it-IT');
     }
 
+    if (column.cast_type.startsWith('currency')) {
+        const match = column.cast_type.match(/^currency(?::(\d+))?$/);
+        const precision = match === null ? 2 : Number(match[1] ?? 2);
+        const numeric = Number(value);
+
+        if (Number.isNaN(numeric)) {
+            return String(value);
+        }
+
+        return numeric.toLocaleString('it-IT', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: precision,
+            maximumFractionDigits: precision,
+        });
+    }
+
     if (column.cast_type.startsWith('decimal')) {
         const numeric = Number(value);
         if (Number.isNaN(numeric)) {

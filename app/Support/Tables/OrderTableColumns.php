@@ -77,7 +77,7 @@ class OrderTableColumns
                 'field_name' => 'total_amount',
                 'label' => 'Totale',
                 'placeholder' => 'Totale',
-                'cast_type' => 'decimal:2',
+                'cast_type' => 'currency:2',
                 'input_type' => 'number',
                 'filterable' => false,
                 'sortable' => true,
