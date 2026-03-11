@@ -20,9 +20,7 @@ class CheckoutService
     ) {
     }
 
-    /**
-     * @param array<int, int> $holdIds
-     */
+    // Esegue il checkout per gli hold indicati (o tutti quelli attivi dell'utente se non passati)
     public function checkout(User $user, array $holdIds = []): Order
     {
         $normalizedHoldIds = $this->normalizeHoldIds($holdIds);
@@ -88,10 +86,7 @@ class CheckoutService
         });
     }
 
-    /**
-     * @param array<int, int> $holdIds
-     * @return array<int, int>
-     */
+    // Normalizza gli ID degli hold in una lista unica di interi validi
     private function normalizeHoldIds(array $holdIds): array
     {
         return array_values(array_unique(
@@ -99,11 +94,7 @@ class CheckoutService
         ));
     }
 
-    /**
-     * @param array<int, int> $holdIds
-     *
-     * @return Collection<int, Hold>
-     */
+    // Recupera gli hold richiesti (oppure tutti quelli attivi dell'utente)
     private function resolveHolds(User $user, array $holdIds): Collection
     {
         if ($holdIds === []) {
@@ -135,10 +126,7 @@ class CheckoutService
         return $requestedHolds;
     }
 
-    /**
-     * @param Collection<int, Hold> $holds
-     * @param array<int, int> $holdIds
-     */
+    // Controlla che gli hold richiesti siano ancora validi prima del checkout
     private function validateHoldsAreCurrent(Collection $holds, array $holdIds): void
     {
         if (empty($holdIds)) {
@@ -156,6 +144,7 @@ class CheckoutService
         }
     }
 
+    // Calcola importo totale dell'ordine dai prezzi dei ticket
     private function computeTotalAmount(Collection $holds, Collection $tickets): string
     {
         $amount = 0.0;

@@ -7,6 +7,7 @@ use App\Models\Hold;
 
 class ExpireHoldsService
 {
+    // Marca in batch gli hold scaduti come EXPIRED e restituisce quanti aggiornati
     public function run(int $chunkSize = 500): int
     {
         $expiredCount = 0;

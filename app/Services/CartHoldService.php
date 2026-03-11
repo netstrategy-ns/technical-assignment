@@ -20,6 +20,7 @@ class CartHoldService
     ) {
     }
 
+    // Costruisce il payload del carrello dell'utente con totale pezzi e importo
     public function buildCartPayload(User $user): array
     {
         $items = Hold::query()
@@ -49,6 +50,7 @@ class CartHoldService
         ];
     }
 
+    // Crea o aggiorna un hold attivo per l'utente e ticket specificato
     public function placeHold(User $user, int $ticketId, int $quantity): Hold
     {
         return DB::transaction(function () use ($user, $ticketId, $quantity): Hold {
@@ -91,6 +93,7 @@ class CartHoldService
         }, 3);
     }
 
+    // Rilascia (scade) un hold appartenente all'utente
     public function releaseHold(User $user, Hold $hold): Hold
     {
         return DB::transaction(function () use ($user, $hold): Hold {
@@ -105,6 +108,7 @@ class CartHoldService
         }, 3);
     }
 
+    // Aggiorna quantità di un hold con validazioni e riattivazione
     public function updateHoldQuantity(User $user, Hold $hold, int $quantity): Hold
     {
         return DB::transaction(function () use ($user, $hold, $quantity): Hold {
@@ -127,6 +131,7 @@ class CartHoldService
         }, 3);
     }
 
+    // Recupera un ticket con lock e lancia errore se non esiste
     private function findTicket(int $ticketId): Ticket
     {
         $ticket = Ticket::query()
@@ -141,6 +146,7 @@ class CartHoldService
         return $ticket;
     }
 
+    // Valida che il ticket abbia un evento valido e la vendita sia avviata
     private function validateTicketForHold(Ticket $ticket): void
     {
         $event = $ticket->ticketType?->event;
@@ -158,6 +164,7 @@ class CartHoldService
         }
     }
 
+    // Recupera e blocca l'hold, verificando proprietà utente
     private function findOwnedLockedHold(User $user, Hold $hold): Hold
     {
         if ($hold->user_id !== $user->id) {
@@ -170,6 +177,7 @@ class CartHoldService
             ->findOrFail($hold->id);
     }
 
+    // Verifica limiti utente e disponibilità prima di mantenere un hold
     private function assertQuantityCanBeHeld(Ticket $ticket, int $targetQuantity, ?int $excludingHoldId = null): void
     {
         if ($ticket->max_per_user !== null && $targetQuantity > $ticket->max_per_user) {
@@ -185,6 +193,7 @@ class CartHoldService
         }
     }
 
+    // Attiva o riattiva l'hold impostando quantità, scadenza e stato
     private function activateHold(Hold $hold, int $quantity): void
     {
         $hold->fill([
@@ -194,6 +203,7 @@ class CartHoldService
         ])->save();
     }
 
+    // Serializza un hold nel formato inviato al frontend
     private function mapHold(Hold $hold): array
     {
         $ticket = $hold->ticket;

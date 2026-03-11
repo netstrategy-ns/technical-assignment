@@ -18,6 +18,7 @@ class QueueService
     public const DEFAULT_MAX_CONCURRENT = 1;
     public const DEFAULT_DURATION_MINUTES = 10;
 
+    // Restituisce la config della coda (max concurrent e durata) con fallback ai default
     public function getQueueConfig(Event $event): array
     {
         $queueConfig = is_array($event->queue_config) ? $event->queue_config : [];
@@ -28,6 +29,7 @@ class QueueService
         ];
     }
 
+    // Partecipa o crea l'entry in coda dell'utente per l'evento
     public function joinQueue(Event $event, User $user): QueueEntry
     {
         if (! $event->isQueueEnabled()) {
@@ -102,6 +104,7 @@ class QueueService
         });
     }
 
+    // Restituisce lo stato corrente in coda dell'utente per l'evento
     public function getQueueStatus(User $user, Event $event): array
     {
         $this->expireEnabledEntries($event);
@@ -156,6 +159,7 @@ class QueueService
         return $this->toQueueStatusPayload($event, $entry, $position, $estimatedWaitSeconds);
     }
 
+    // Blocca o consente la presa in carrello verificando stato coda utente
     public function assertUserCanHold(User $user, ?Event $event): void
     {
         if ($event === null) {
@@ -175,6 +179,7 @@ class QueueService
         }
     }
 
+    // Verifica che l'utente possa acquistare tutti gli eventi presenti negli hold
     public function assertCheckoutAllowed(User $user, Collection $holds): void
     {
         $eventIds = $holds
@@ -194,6 +199,7 @@ class QueueService
         }
     }
 
+    // Rinnova la finestra abilitato in coda se l'utente è attivo per quell'evento
     public function refreshEnabledWindowForUserAndEvent(User $user, Event $event): void
     {
         if (! $event->isQueueEnabled()) {
@@ -217,6 +223,7 @@ class QueueService
         ]);
     }
 
+    // Marca come completate le entry ENABLED dell'utente per gli eventi indicati
     public function markEntriesCompleted(User $user, array $eventIds): void
     {
         if ($eventIds === []) {
@@ -234,6 +241,7 @@ class QueueService
             ]);
     }
 
+    // Elabora tutte le code eventi attivi e promuove/scade entry
     public function processQueue(): int
     {
         $updated = 0;
@@ -254,6 +262,7 @@ class QueueService
         return $updated;
     }
 
+    // Aggiorna un singolo evento elaborando scadenze e promozioni in coda
     private function processQueueForEvent(Event $event): int
     {
         return DB::transaction(function () use ($event): int {
@@ -264,6 +273,7 @@ class QueueService
         });
     }
 
+    // Scade automaticamente le entry ENABLED oltre ora limite
     private function expireEnabledEntries(Event $event): int
     {
         return QueueEntry::query()
@@ -278,6 +288,7 @@ class QueueService
             ]);
     }
 
+    // Promuove gli utenti in attesa fino a riempire gli slot disponibili
     private function promoteWaitingEntries(Event $event): int
     {
         $config = $this->getQueueConfig($event);
@@ -316,6 +327,7 @@ class QueueService
         return $toEnable->count();
     }
 
+    // Stima i secondi di attesa in base alla posizione in coda e durata slot
     private function estimateWaitingWaitSeconds(Event $event, QueueEntry $entry, int $position): int
     {
         if ($position <= 0) {
@@ -383,6 +395,7 @@ class QueueService
         return 0;
     }
 
+    // Ordina cronologicamente gli istanti di disponibilità degli slot
     private function sortSlotAvailability(array $slotAvailability): array
     {
         usort(
@@ -393,6 +406,7 @@ class QueueService
         return $slotAvailability;
     }
 
+    // Calcola la nuova scadenza enabled_until rispettando eventuale hold attivo
     private function resolveEnabledUntil(int $userId, Event $event, array $config, ?CarbonInterface $asOf = null): CarbonInterface
     {
         $now = $asOf ?? now();
@@ -413,6 +427,7 @@ class QueueService
         return $latestHold->expires_at;
     }
 
+    // Normalizza lo stato coda in formato payload per frontend
     private function toQueueStatusPayload(Event $event, ?QueueEntry $entry = null, ?int $position = null, ?int $estimatedWaitSeconds = null): array
     {
         $config = $this->getQueueConfig($event);
