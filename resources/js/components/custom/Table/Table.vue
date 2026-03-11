@@ -7,20 +7,11 @@ import type {
     TableColumn,
     TableFiltersState,
     TableSort,
+    TableProps,
 } from '@/components/custom/Table/types';
 
 const props = withDefaults(
-    defineProps<{
-        title?: string;
-        columns?: TableColumn[];
-        rows?: Record<string, unknown>[];
-        sort?: TableSort;
-        filters?: TableFiltersState;
-        emptyMessage?: string;
-        loading?: boolean;
-        hasActions?: boolean;
-        class?: string;
-    }>(),
+    defineProps<TableProps>(),
     {
         sort: () => ({ field: null, dir: 'asc' }),
         filters: () => ({}),

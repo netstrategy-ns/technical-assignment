@@ -35,6 +35,10 @@ export function formatCellValue(value: unknown, column: TableColumn): string {
         }
     }
 
+    if (column.cast_type === 'admin_flag') {
+        return value ? 'Sì' : '-';
+    }
+
     if (column.cast_type === 'boolean') {
         return value ? 'Sì' : 'No';
     }

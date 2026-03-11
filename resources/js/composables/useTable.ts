@@ -280,7 +280,6 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
         router.get(baseUrl.value, payload, {
             preserveState: true,
             preserveScroll: true,
-            preserveFocus: true,
             replace: true,
         });
     };

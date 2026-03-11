@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Package } from 'lucide-vue-next';
+import { LayoutGrid, Package, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -61,6 +61,11 @@ const mainNavItems = computed<NavItem[]>(() => {
                 title: 'Coda eventi',
                 href: '/admin/queue-entries',
                 icon: Package,
+            },
+            {
+                title: 'Utenti',
+                href: '/admin/users',
+                icon: Users,
             },
         );
     }

@@ -22,14 +22,6 @@ const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Admin',
-        href: '/admin',
-    },
-    {
-        title: 'Shop',
-        href: '/admin/events',
-    },
-    {
         title: 'Coda eventi',
         href: '/admin/queue-entries',
     },

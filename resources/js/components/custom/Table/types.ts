@@ -23,3 +23,15 @@ export type TableSort = {
 };
 
 export type TableFiltersState = Record<string, string | number | boolean | null>;
+
+export type TableProps = {
+    title?: string;
+    columns?: TableColumn[];
+    rows?: Record<string, unknown>[];
+    sort?: TableSort;
+    filters?: TableFiltersState;
+    emptyMessage?: string;
+    loading?: boolean;
+    hasActions?: boolean;
+    class?: string;
+};
