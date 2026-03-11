@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\EventCategoryController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\QueueEntryController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TicketController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -27,6 +28,7 @@ Route::middleware(['web', 'auth', 'verified', 'admin'])
         Route::get('/event-categories', [EventCategoryController::class, 'index'])->name('event-categories.index');
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/queue-entries', [QueueEntryController::class, 'index'])->name('queue-entries.index');
 
         Route::get('/user/settings/profile', [ProfileController::class, 'edit'])->name('user.settings.profile');

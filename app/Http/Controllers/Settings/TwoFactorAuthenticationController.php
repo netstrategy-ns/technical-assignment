@@ -30,7 +30,7 @@ class TwoFactorAuthenticationController extends Controller implements HasMiddlew
         $request->ensureStateIsValid();
 
         $component = $request->user()->isAdmin()
-            ? 'admin/user/Profile'
+            ? 'admin/profile/Profile'
             : 'app/user/Profile';
 
         return Inertia::render($component, [

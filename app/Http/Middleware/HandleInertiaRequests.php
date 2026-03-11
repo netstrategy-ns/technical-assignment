@@ -89,7 +89,7 @@ class HandleInertiaRequests extends Middleware
             $adminUrls = [
                 'adminDashboard' => Route::has('admin.dashboard') ? route('admin.dashboard') : '/admin/dashboard',
                 'adminStatistics' => Route::has('admin.statistics') ? route('admin.statistics') : '/admin/statistics',
-                'adminUsers' => Route::has('admin.users') ? route('admin.users') : '/admin/users',
+                'adminUsers' => Route::has('admin.users.index') ? route('admin.users.index') : '/admin/users',
                 'adminEventsBase' => Route::has('admin.events.index') ? route('admin.events.index') : '/admin/events',
             ];
         }

@@ -15,7 +15,7 @@ class AppearanceController extends Controller
     public function edit(Request $request): Response
     {
         $component = $request->user()?->isAdmin()
-            ? 'admin/user/Profile'
+            ? 'admin/profile/Profile'
             : 'app/user/Profile';
 
         return Inertia::render($component);

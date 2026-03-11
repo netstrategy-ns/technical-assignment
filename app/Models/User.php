@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Support\Tables\UserTableColumns;
+use App\Models\Concerns\HasAdminTable;
+use App\Models\Scopes\User\FilterScopes;
+use App\Models\Scopes\User\SortScopes;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasAdminTable;
+    use FilterScopes;
+    use SortScopes;
 
     /**
      * The attributes that are mass assignable.
@@ -34,7 +41,7 @@ class User extends Authenticatable
 
     /**
      * The attributes that should be hidden for serialization.
-     * is_admin non va esposto al frontend; usare canAccessAdmin() lato backend.
+     * is_admin viene reso visibile solo nelle liste amministrative quando necessario.
      *
      * @var list<string>
      */
