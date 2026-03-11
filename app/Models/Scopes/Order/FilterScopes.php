@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 trait FilterScopes
 {
-    // Filtra ordini per nome utente
-    public function scopeFilterByUserName(Builder $query, string $name): Builder
+    // Filtra ordini per email utente
+    public function scopeFilterByUserEmail(Builder $query, string $email): Builder
     {
-        return $query->whereHas('user', fn (Builder $userQuery): Builder => $userQuery->where('name', 'like', '%' . $name . '%')->orWhere('email', 'like', '%' . $name . '%'));
+        return $query->whereHas('user', fn (Builder $userQuery): Builder => $userQuery->where('email', 'like', '%' . $email . '%'));
     }
 
     // Filtra ordini per codice pubblico

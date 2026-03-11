@@ -12,10 +12,10 @@ trait FilterScopes
         return $query->whereHas('event', fn (Builder $relatedQuery): Builder => $relatedQuery->where('title', 'like', '%' . $eventTitle . '%'));
     }
 
-    // Filtra code per nome utente
-    public function scopeFilterByUserName(Builder $query, string $userName): Builder
+    // Filtra code per email utente
+    public function scopeFilterByUserEmail(Builder $query, string $userEmail): Builder
     {
-        return $query->whereHas('user', fn (Builder $relatedQuery): Builder => $relatedQuery->where('name', 'like', '%' . $userName . '%'));
+        return $query->whereHas('user', fn (Builder $relatedQuery): Builder => $relatedQuery->where('email', 'like', '%' . $userEmail . '%'));
     }
 
     // Filtra code per stato
@@ -34,5 +34,11 @@ trait FilterScopes
     public function scopeFilterByEnabledAt(Builder $query, string $date): Builder
     {
         return $query->whereDate('enabled_at', $date);
+    }
+
+    // Filtra code per scadenza
+    public function scopeFilterByEnabledUntil(Builder $query, string $date): Builder
+    {
+        return $query->whereDate('enabled_until', $date);
     }
 }

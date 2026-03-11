@@ -128,13 +128,14 @@ trait HasAdminTable
         }
 
         if (is_string($value)) {
-            $normalized = trim($value);
+            $normalized = (string) $value;
+            $trimmed = trim($normalized);
 
-            if ($normalized === '') {
+            if ($trimmed === '') {
                 return null;
             }
 
-            $lower = strtolower($normalized);
+            $lower = strtolower($trimmed);
             if ($lower === 'true') {
                 return true;
             }
@@ -143,12 +144,12 @@ trait HasAdminTable
                 return false;
             }
 
-            if (is_numeric($normalized) && ctype_digit($normalized)) {
-                return (int) $normalized;
+            if (is_numeric($trimmed) && ctype_digit($trimmed)) {
+                return (int) $trimmed;
             }
 
-            if (is_numeric($normalized)) {
-                return (float) $normalized;
+            if (is_numeric($trimmed)) {
+                return (float) $trimmed;
             }
 
             return $normalized;

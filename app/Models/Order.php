@@ -28,6 +28,11 @@ class Order extends Model
         'status',
         'total_amount',
     ];
+
+    protected $appends = [
+        'event_titles',
+        'event_categories',
+    ];
     
     protected function casts(): array
     {
@@ -72,6 +77,24 @@ class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function getEventTitlesAttribute(): string
+    {
+        return $this->orderItems
+            ->map(fn (OrderItem $item): ?string => $item->ticket?->ticketType?->event?->title)
+            ->filter()
+            ->unique()
+            ->implode(', ');
+    }
+
+    public function getEventCategoriesAttribute(): string
+    {
+        return $this->orderItems
+            ->map(fn (OrderItem $item): ?string => $item->ticket?->ticketType?->event?->category?->name)
+            ->filter()
+            ->unique()
+            ->implode(', ');
     }
 
 }

@@ -15,12 +15,12 @@ trait SortScopes
             ->select('queue_entries.*');
     }
 
-    // Ordina code per nome utente
-    public function scopeSortByUserName(Builder $query, string $direction = 'asc'): Builder
+    // Ordina code per email utente
+    public function scopeSortByUserEmail(Builder $query, string $direction = 'asc'): Builder
     {
         return $query
             ->leftJoin('users as u', 'u.id', '=', 'queue_entries.user_id')
-            ->orderBy('u.name', $direction)
+            ->orderBy('u.email', $direction)
             ->select('queue_entries.*');
     }
 
@@ -40,6 +40,12 @@ trait SortScopes
     public function scopeSortByEnabledAt(Builder $query, string $direction = 'asc'): Builder
     {
         return $query->orderBy('enabled_at', $direction);
+    }
+
+    // Ordina code per scadenza
+    public function scopeSortByEnabledUntil(Builder $query, string $direction = 'asc'): Builder
+    {
+        return $query->orderBy('enabled_until', $direction);
     }
 
     // Ordina code per id

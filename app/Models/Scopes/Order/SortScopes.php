@@ -12,12 +12,12 @@ trait SortScopes
         return $query->orderBy('id', $direction);
     }
 
-    // Ordina ordini per nome utente
-    public function scopeSortByUserName(Builder $query, string $direction = 'asc'): Builder
+    // Ordina ordini per email utente
+    public function scopeSortByUserEmail(Builder $query, string $direction = 'asc'): Builder
     {
         return $query
             ->leftJoin('users as u', 'u.id', '=', 'orders.user_id')
-            ->orderBy('u.name', $direction)
+            ->orderBy('u.email', $direction)
             ->select('orders.*');
     }
 
