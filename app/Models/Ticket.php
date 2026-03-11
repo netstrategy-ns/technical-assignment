@@ -26,6 +26,12 @@ class Ticket extends Model
         'max_per_user',
     ];
 
+    protected $appends = [
+        'event_title',
+        'availability',
+        'event_date',
+    ];
+
     protected $casts = [
         'price' => 'decimal:2',
         'max_per_user' => 'integer',
@@ -58,6 +64,24 @@ class Ticket extends Model
     public function holds(): HasMany
     {
         return $this->hasMany(Hold::class);
+    }
+
+    public function getEventTitleAttribute(): ?string
+    {
+        return $this->ticketType?->event?->title;
+    }
+
+    public function getEventDateAttribute(): ?string
+    {
+        return $this->ticketType?->event?->starts_at?->format('d/m/Y');
+    }
+
+    public function getAvailabilityAttribute(): int
+    {
+        $quota = (int) ($this->ticketType?->quota?->quantity ?? 0);
+        $purchased = (int) ($this->purchased_quantity ?? 0);
+
+        return max(0, $quota - $purchased);
     }
 
     

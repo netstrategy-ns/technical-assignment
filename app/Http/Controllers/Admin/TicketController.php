@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\OrderStatusEnum;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +16,23 @@ class TicketController extends Controller
         $modelClass = Ticket::class;
         $resource = 'tickets';
 
-        $query = Ticket::query()->with('ticketType:id,name,event_id');
+        $query = Ticket::query()->with([
+            'ticketType' => function ($query): void {
+                $query
+                    ->select('id', 'name', 'event_id')
+                    ->with([
+                        'quota:id,ticket_type_id,quantity',
+                        'event:id,title,starts_at',
+                    ]);
+            },
+        ]);
+        $query->withSum([
+            'orderItems as purchased_quantity' => fn ($query) => $query->whereHas(
+                'order',
+                fn ($orderQuery) => $orderQuery->where('status', OrderStatusEnum::COMPLETED->value),
+            ),
+        ], 'quantity');
+
         $query = $modelClass::applyTableFilters($query, $request->query());
         $sort = $modelClass::parseTableSort($request->query());
 
