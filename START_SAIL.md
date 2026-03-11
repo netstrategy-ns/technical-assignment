@@ -11,6 +11,7 @@
 - [7. Comandi iniziali](#comandi-iniziali)
 - [8. Comandi Sail utili](#comandi-sail-utili)
 - [9. Verifica queue e scheduler](#verifica-queue-e-scheduler)
+- [10. Comandi custom](#comandi-custom)
 
 ## Avvio rapido
 
@@ -133,3 +134,25 @@ sail npm <comando>
 sail ps
 sail logs -f laravel.queue laravel.scheduler
 ```
+
+## Comandi custom
+
+> In Sail usa sempre `sail artisan` per eseguire i comandi.
+
+```bash
+sail artisan user:create
+sail artisan admin:create
+sail artisan expire-holds --chunk=500
+```
+
+- `user:create`  
+  Crea un utente normale interattivamente (`Nome`, `Email`, `Password`, `Conferma password`).
+
+- `admin:create`  
+  Crea un utente con `is_admin = true` con lo stesso flusso interattivo.
+
+- `expire-holds [--chunk=<numero>]`  
+  Esegue la pulizia delle hold scadute subito da terminale.
+
+  - Default: `--chunk=500`
+  - Esempio: `sail artisan expire-holds --chunk=200`

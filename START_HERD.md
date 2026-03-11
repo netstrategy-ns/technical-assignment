@@ -7,6 +7,7 @@
 - [3. Configurazione environment](#configurazione-env)
 - [4. Avvio servizi locali](#avvio-servizi-locali)
 - [5. Verifiche rapide](#verifiche-rapide)
+- [6. Comandi custom](#comandi-custom)
 
 ## Installazione Herd
 
@@ -81,3 +82,23 @@ php artisan queue:work --sleep=3 --tries=3
 php artisan schedule:list
 php artisan queue:failed
 ```
+
+## Comandi custom
+
+```bash
+php artisan user:create
+php artisan admin:create
+php artisan expire-holds --chunk=500
+```
+
+- `user:create`  
+  Crea un utente normale interattivamente (`Nome`, `Email`, `Password`, `Conferma password`).
+
+- `admin:create`  
+  Crea un utente con `is_admin = true` con lo stesso flusso interattivo.
+
+- `expire-holds [--chunk=<numero>]`  
+  Esegue la pulizia delle hold scadute subito da terminale.
+
+  - Default: `--chunk=500`
+  - Esempio: `php artisan expire-holds --chunk=200`
