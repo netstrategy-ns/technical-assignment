@@ -7,20 +7,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Concerns\HasAdminTable;
 use Illuminate\Support\Str;
+use App\Models\Scopes\Order\FilterScopes;
+use App\Models\Scopes\Order\SortScopes;
+use App\Support\Tables\OrderTableColumns;
 
 class Order extends Model
 {
     /** @use HasFactory<\Database\Factories\OrderFactory> */
     use HasFactory;
+    use HasAdminTable;
+    use FilterScopes;
+    use SortScopes;
 
+    
     protected $fillable = [
         'user_id',
         'public_id',
         'status',
         'total_amount',
     ];
-
+    
     protected function casts(): array
     {
         return [
@@ -28,12 +36,19 @@ class Order extends Model
             'total_amount' => 'decimal:2',
         ];
     }
-
+    
     public function getRouteKeyName(): string
     {
         return 'public_id';
     }
-
+    
+    
+    // Gestione colonne tabella dashboard admin
+    public static function tableColumns(): array
+    {
+        return OrderTableColumns::columns();
+    }
+    
     protected static function booted(): void
     {
         static::creating(function (Order $order): void {
@@ -45,7 +60,7 @@ class Order extends Model
     
     /**
      * ------------------------------------------------------------
-     * RELATTIONS
+     * RELATIONS
      * ------------------------------------------------------------
      */
 
@@ -58,4 +73,5 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
 }

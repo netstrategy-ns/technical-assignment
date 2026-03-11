@@ -8,17 +8,32 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Concerns\HasAdminTable;
+use App\Models\Scopes\TicketType\FilterScopes;
+use App\Models\Scopes\TicketType\SortScopes;
+use App\Support\Tables\TicketTypeTableColumns;
 
 class TicketType extends Model
 {
     /** @use HasFactory<\Database\Factories\TicketTypeFactory> */
     use HasFactory;
+    use HasAdminTable;
+    use FilterScopes;
+    use SortScopes;
+
+
 
     protected $fillable = [
         'event_id',
         'venue_type_id',
         'name',
     ];
+
+    // Gestione colonne tabella dashboard admin
+    public static function tableColumns(): array
+    {
+        return TicketTypeTableColumns::columns();
+    }
 
     /**
      * ------------------------------------------------------------

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Support\Tables\UserTableColumns;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable
@@ -57,25 +58,39 @@ class User extends Authenticatable
         'is_admin' => 'boolean',
     ];
 
+    // Gestione colonne tabella dashboard admin
+    public static function tableColumns(): array
+    {
+        return UserTableColumns::columns();
+    }
+
+
     /**
      * ------------------------------------------------------------
-     * SCOPES
+     * RELATIONS
+     * ------------------------------------------------------------
+     * 
+     */
+
+     public function holds(): HasMany
+     {
+         return $this->hasMany(Hold::class);
+     }
+ 
+     public function orders(): HasMany
+     {
+         return $this->hasMany(Order::class);
+     }
+
+    /**
+     * ------------------------------------------------------------
+     * HELPERS
      * ------------------------------------------------------------
      */
 
     public function isAdmin(): bool
     {
         return $this->is_admin === true;
-    }
-
-    public function holds(): HasMany
-    {
-        return $this->hasMany(Hold::class);
-    }
-
-    public function orders(): HasMany
-    {
-        return $this->hasMany(Order::class);
     }
 
 }

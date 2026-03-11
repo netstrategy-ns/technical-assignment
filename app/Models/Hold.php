@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use App\Enums\HoldStatusEnum;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Scopes\Hold\FilterScopes;
 
 class Hold extends Model
 {
     /** @use HasFactory<\Database\Factories\HoldFactory> */
     use HasFactory;
+    use FilterScopes;
 
     protected $fillable = [
         'user_id',
@@ -38,16 +39,6 @@ class Hold extends Model
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
-    }
-
-    public function scopeActive(Builder $query): Builder
-    {
-        return $query->where('status', HoldStatusEnum::ACTIVE->value);
-    }
-
-    public function scopeValid(Builder $query): Builder
-    {
-        return $query->where('expires_at', '>', now());
     }
 
     public function isValid(): bool

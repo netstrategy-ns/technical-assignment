@@ -6,11 +6,18 @@ use App\Enums\QueueEntryStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Concerns\HasAdminTable;
+use App\Models\Scopes\QueueEntry\FilterScopes;
+use App\Models\Scopes\QueueEntry\SortScopes;
+use App\Support\Tables\QueueEntryTableColumns;
 
 class QueueEntry extends Model
 {
     /** @use HasFactory<\Database\Factories\QueueEntryFactory> */
     use HasFactory;
+    use HasAdminTable;
+    use FilterScopes;
+    use SortScopes;
 
     protected $fillable = [
         'user_id',
@@ -31,13 +38,28 @@ class QueueEntry extends Model
         ];
     }
 
+    // Gestione colonne tabella dashboard admin
+    public static function tableColumns(): array
+    {
+        return QueueEntryTableColumns::columns();
+    }
+
+    /**
+     * ------------------------------------------------------------
+     * RELATIONS
+     * ------------------------------------------------------------
+     */
+
+    // Relazione utente
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    // Relazione evento
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
+
 }

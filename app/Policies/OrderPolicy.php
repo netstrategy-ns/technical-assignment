@@ -13,7 +13,7 @@ class OrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -21,6 +21,10 @@ class OrderPolicy
      */
     public function view(User $user, Order $order): bool|Response
     {
+        if ($user->isAdmin()) {
+            return Response::allow();
+        }
+
         if ($user->id === $order->user_id) {
             return Response::allow();
         }
@@ -33,7 +37,7 @@ class OrderPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -41,7 +45,7 @@ class OrderPolicy
      */
     public function update(User $user, Order $order): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -49,7 +53,7 @@ class OrderPolicy
      */
     public function delete(User $user, Order $order): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -57,7 +61,7 @@ class OrderPolicy
      */
     public function restore(User $user, Order $order): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -65,6 +69,6 @@ class OrderPolicy
      */
     public function forceDelete(User $user, Order $order): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 }

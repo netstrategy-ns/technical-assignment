@@ -7,11 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Concerns\HasAdminTable;
+use App\Models\Scopes\Ticket\FilterScopes;
+use App\Models\Scopes\Ticket\SortScopes;
+use App\Support\Tables\TicketTableColumns;
 
 class Ticket extends Model
 {
     /** @use HasFactory<\Database\Factories\TicketFactory> */
     use HasFactory;
+    use HasAdminTable;
+    use FilterScopes;
+    use SortScopes;
 
     protected $fillable = [
         'ticket_type_id',
@@ -24,9 +31,15 @@ class Ticket extends Model
         'max_per_user' => 'integer',
     ];
 
+    // Gestione colonne tabella dashboard admin
+    public static function tableColumns(): array
+    {
+        return TicketTableColumns::columns();
+    }
+
     /**
      * ------------------------------------------------------------
-     * RELATTIONS
+     * RELATIONS
      * ------------------------------------------------------------
      */
 
@@ -46,6 +59,8 @@ class Ticket extends Model
     {
         return $this->hasMany(Hold::class);
     }
+
+    
 
     public function soldQuantity(): int
     {

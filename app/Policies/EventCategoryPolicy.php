@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\EventCategory;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class EventCategoryPolicy
 {
@@ -13,7 +12,7 @@ class EventCategoryPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -21,7 +20,7 @@ class EventCategoryPolicy
      */
     public function view(User $user, EventCategory $eventCategory): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -29,7 +28,7 @@ class EventCategoryPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -37,7 +36,7 @@ class EventCategoryPolicy
      */
     public function update(User $user, EventCategory $eventCategory): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -45,7 +44,7 @@ class EventCategoryPolicy
      */
     public function delete(User $user, EventCategory $eventCategory): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -53,7 +52,7 @@ class EventCategoryPolicy
      */
     public function restore(User $user, EventCategory $eventCategory): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -61,6 +60,6 @@ class EventCategoryPolicy
      */
     public function forceDelete(User $user, EventCategory $eventCategory): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 }
