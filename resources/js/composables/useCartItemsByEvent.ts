@@ -33,7 +33,9 @@ interface UseCartItemsByEventOptions {
     parseRemainingSeconds?: (expiresAt: string | null) => number;
 }
 
+// Raggruppa gli item del carrello per evento con totali e dettagli
 export function useCartItemsByEvent({ items, parseRemainingSeconds }: UseCartItemsByEventOptions) {
+    // Calcola per evento righe, subtotali e stato di scadenza
     return computed<CartItemsByEventResult[]>(() => {
         const byEvent = new Map<number, CartItemsByEventResult>();
 

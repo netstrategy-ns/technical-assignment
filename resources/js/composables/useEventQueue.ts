@@ -2,6 +2,7 @@ import { router, usePoll } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { QueueEvent, QueuePageProps, QueueStatus, UseEventQueueOptions, UseEventQueueReturn } from '@/types/models/queue';
 
+// Converte secondi stimati in stringa mm:ss
 const formatEstimatedWait = (seconds: number | null): string => {
     const total = Math.max(0, seconds ?? 0);
     const minutes = Math.floor(total / 60);
@@ -9,6 +10,7 @@ const formatEstimatedWait = (seconds: number | null): string => {
     return `${String(minutes).padStart(2, '0')}:${String(remaining).padStart(2, '0')}`;
 };
 
+// Estrae il primo messaggio leggibile da un oggetto errori
 const getFirstQueueErrorMessage = (errors: unknown, fallback: string): string => {
     if (!errors || typeof errors !== 'object') {
         return fallback;
@@ -33,6 +35,7 @@ const getFirstQueueErrorMessage = (errors: unknown, fallback: string): string =>
     return fallback;
 };
 
+// Gestisce stato, polling e azioni utente per la coda evento
 export const useEventQueue = <TEvent extends QueueEvent>({
     event,
     initialQueueStatus,
@@ -58,6 +61,7 @@ export const useEventQueue = <TEvent extends QueueEvent>({
     const shouldShowJoinAction = computed(() => canInteractWithQueue.value && !isEnabledInQueue.value);
     const queueUsersInLine = computed(() => queueStatus.value?.in_queue_count ?? 0);
 
+    // Genera label utente in base allo stato corrente della coda
     const statusLabel = computed(() => {
         if (!canInteractWithQueue.value) {
             return '';
@@ -87,8 +91,10 @@ export const useEventQueue = <TEvent extends QueueEvent>({
         return `In coda ora: ${queueUsersInLine.value} utenti.`;
     });
 
+    // URL endpoint per unirsi alla coda
     const queueJoinUrl = () => `/events/${event.value.id}/queue/join`;
 
+    // Applica lo stato ricevuto dalla pagina/refresh alla coda locale
     const applyQueuePayload = (payload: QueuePageProps<TEvent> | null): void => {
         if (payload?.queueStatus !== undefined) {
             queueStatus.value = payload.queueStatus;
@@ -123,6 +129,7 @@ export const useEventQueue = <TEvent extends QueueEvent>({
         },
     );
 
+    // Avvia o ferma il polling in base allo stato corrente
     const syncQueuePolling = (): void => {
         if (!canInteractWithQueue.value) {
             stopQueuePolling();
@@ -137,6 +144,7 @@ export const useEventQueue = <TEvent extends QueueEvent>({
         stopQueuePolling();
     };
 
+    // Ricarica lo stato coda e allinea polling e stato UI
     const refreshQueueStatus = async (): Promise<void> => {
         if (!canInteractWithQueue.value) {
             return;
@@ -175,6 +183,7 @@ export const useEventQueue = <TEvent extends QueueEvent>({
         });
     };
 
+    // Avvia la join della coda con gestione loading, messaggi ed errori
     const joinQueue = async (): Promise<void> => {
         if (!canInteractWithQueue.value || queueLoading.value) {
             return;
@@ -220,6 +229,7 @@ export const useEventQueue = <TEvent extends QueueEvent>({
         });
     };
 
+    // Ricarica stato quando la scheda torna visibile
     const refreshQueueOnVisibility = (): void => {
         if (typeof document === 'undefined' || document.hidden) {
             return;

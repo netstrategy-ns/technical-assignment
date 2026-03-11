@@ -70,6 +70,7 @@ export const buildEventsIndexUrl = (
 };
 
 
+// Mappa i filtri ricevuti dal server nel formato usato dal client
 export const filtersStateFromPayload = (payload: Record<string, unknown>): EventFiltersState => {
     const sortRaw = payload.sort != null ? String(payload.sort) : null;
     const sort = sortRaw && ['date_asc', 'date_desc', 'featured_first'].includes(sortRaw) ? sortRaw : DEFAULT_SORT;
@@ -85,6 +86,7 @@ export const filtersStateFromPayload = (payload: Record<string, unknown>): Event
     };
 };
 
+// Wrapper semplice per costruzione URL con base custom
 export const useEventFilters = (eventsIndexUrl: string = defaultBaseUrl) => {
     return {
         buildEventsIndexUrl: (filters: EventFiltersState, options?: BuildEventsIndexUrlOptions) =>
@@ -94,6 +96,7 @@ export const useEventFilters = (eventsIndexUrl: string = defaultBaseUrl) => {
 };
 
 
+// Gestisce stato filtri, applicazione e reset dei filtri eventi
 export const useEventFiltersPanel = (
     baseUrl: string,
     filtersFromServer: Ref<EventFiltersState>,
@@ -111,9 +114,11 @@ export const useEventFiltersPanel = (
     const availableTickets = ref(filtersFromServer.value.available_tickets ?? false);
     const sort = ref(filtersFromServer.value.sort ?? DEFAULT_SORT);
 
+    // Recupera l'elemento input della ricerca per focus/blur
     const getSearchInputElement = (): HTMLInputElement | null =>
         searchInputRef?.value?.$el ?? null;
 
+    // Verifica se il campo ricerca è attualmente focusato
     const isSearchInputFocused = (): boolean => {
         const input = getSearchInputElement();
 
@@ -137,11 +142,13 @@ export const useEventFiltersPanel = (
         { deep: true },
     );
 
+    // Legge il valore per_page corrente dai query params, validandolo
     const currentPerPage = computed(() => {
         const n = getNumericQueryParam(page.url, 'per_page', DEFAULT_PER_PAGE);
         return PER_PAGE_OPTIONS.includes(n as (typeof PER_PAGE_OPTIONS)[number]) ? n : DEFAULT_PER_PAGE;
     });
 
+    // Costruisce il payload filtro corrente dal model UI
     const buildQuery = (): EventFiltersState => ({
         featured: featured.value,
         category: category.value?.trim() || undefined,
@@ -153,6 +160,7 @@ export const useEventFiltersPanel = (
         sort: sort.value || DEFAULT_SORT,
     });
 
+    // Applica i filtri aggiornando URL e resettando pagina
     const applyFilters = () => {
         const url = buildEventsIndexUrl(baseUrl, buildQuery(), {
             resetPage: true,
@@ -161,6 +169,7 @@ export const useEventFiltersPanel = (
         router.visit(url, { preserveState, replace: true, preserveScroll: true });
     };
 
+    // Applica filtri preservando il focus sull'input di ricerca
     const applyFiltersWithPreservedFocus = () => {
         const url = buildEventsIndexUrl(baseUrl, buildQuery(), {
             resetPage: true,
@@ -176,11 +185,13 @@ export const useEventFiltersPanel = (
         });
     };
 
+    // Applica i filtri con debounce (opzionale focus-preserve)
     const applyFiltersDebounced = useDebounceFn(
         searchInputRef ? applyFiltersWithPreservedFocus : applyFilters,
         debounceMs,
     );
 
+    // Resetta tutti i filtri ai valori di default
     const resetFilters = () => {
         search.value = '';
         category.value = '';
@@ -198,6 +209,7 @@ export const useEventFiltersPanel = (
         router.visit(url, { preserveState, replace: true, preserveScroll: true });
     };
 
+    // Indica se almeno un filtro ha un valore diverso dal default
     const hasActiveFilters = computed(() => {
         const q = buildQuery();
         return (

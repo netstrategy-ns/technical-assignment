@@ -11,6 +11,7 @@ let cartExpirationSyncResetTimeoutId: number | null = null;
 let cartHoldExpiredListenerCount = 0;
 export const CART_HOLD_EXPIRED_EVENT = 'tickme:cart-hold-expired';
 
+// Invia l'evento custom quando un hold del carrello scade
 function emitCartHoldExpiredEvent(): void {
     if (typeof window === 'undefined') {
         return;
@@ -19,6 +20,7 @@ function emitCartHoldExpiredEvent(): void {
     window.dispatchEvent(new Event(CART_HOLD_EXPIRED_EVENT));
 }
 
+// Aggiorna la pagina corrente via Inertia preservando stato e scroll
 function refreshCurrentPage(options: CartActionOptions = {}): void {
     router.visit(window.location.href, {
         preserveScroll: true,
@@ -30,6 +32,7 @@ function refreshCurrentPage(options: CartActionOptions = {}): void {
     });
 }
 
+// Verifica se tra gli item del carrello ce ne sono già scaduti
 function cartHasExpiredItemsFromItems(items: CartItem[]): boolean {
     const now = Date.now();
 
@@ -55,6 +58,7 @@ const emptyCart: CartPayload = {
     },
 };
 
+// Espone stato e azioni principali per leggere e modificare il carrello
 export function useCart() {
     const page = usePage();
 
@@ -65,12 +69,15 @@ export function useCart() {
     const totalAmount = computed(() => cart.value.summary?.total_amount ?? 0);
     const isEmpty = computed(() => items.value.length === 0);
 
+    // Cerca e restituisce l'item corrente per ID ticket
     const getItemByTicketId = (ticketId: number): CartItem | undefined =>
         items.value.find((item) => item.ticket.id === ticketId);
 
+    // Legge la quantità attuale per un ticket specifico
     const quantityForTicket = (ticketId: number): number =>
         getItemByTicketId(ticketId)?.quantity ?? 0;
 
+    // Aggiunge un hold al carrello
     const add = (ticketId: number, quantity = 1, options: CartActionOptions = {}): void => {
         router.post(
             urls.value.cartHoldsStore ?? '/cart/hold',
@@ -89,6 +96,7 @@ export function useCart() {
         );
     };
 
+    // Rimuove un hold dal carrello
     const remove = (holdId: number, options: CartActionOptions = {}): void => {
         router.delete(`${urls.value.cartHoldsBase ?? '/cart/hold'}/${holdId}`, {
             preserveScroll: true,
@@ -100,6 +108,7 @@ export function useCart() {
         });
     };
 
+    // Aggiorna la quantità di un hold esistente
     const update = (holdId: number, quantity: number, options: CartActionOptions = {}): void => {
         router.patch(
             `${urls.value.cartHoldsUpdateBase ?? '/cart/hold'}/${holdId}`,
@@ -115,6 +124,7 @@ export function useCart() {
         );
     };
 
+    // Forza il refresh della pagina corrente senza cambiare pagina
     const refresh = (options: CartActionOptions = {}): void => {
         refreshCurrentPage(options);
     };
@@ -134,6 +144,7 @@ export function useCart() {
     };
 }
 
+// Avvia un refresh periodico del carrello (attivo in pagina)
 export function useCartAutoRefresh(intervalMs = 90_000) {
     onMounted(() => {
         cartAutoRefreshConsumers += 1;
@@ -163,6 +174,7 @@ export function useCartAutoRefresh(intervalMs = 90_000) {
     });
 }
 
+// Controlla periodicamente le scadenze degli hold e notifica se necessario
 export function useCartExpirationAutoRefresh(checkIntervalMs = 1_000) {
     const page = usePage();
     const cart = computed(() => (page.props.cart as CartPayload | null) ?? emptyCart);
@@ -213,6 +225,7 @@ export function useCartExpirationAutoRefresh(checkIntervalMs = 1_000) {
     });
 }
 
+// Registra un listener globale per l'evento di hold scaduto
 export function useCartHoldExpiredEvent(handler: () => void): void {
     if (typeof window === 'undefined') {
         return;

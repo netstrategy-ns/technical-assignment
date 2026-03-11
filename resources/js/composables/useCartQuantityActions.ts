@@ -7,6 +7,7 @@ interface UseCartQuantityActionsOptions {
     defaultErrorMessage?: string;
 }
 
+// Gestisce calcoli limiti, errori e stato loading sugli aggiornamenti quantità
 export function useCartQuantityActions({
     remove,
     update,
@@ -16,6 +17,7 @@ export function useCartQuantityActions({
     const actionErrors = ref<Record<number, string>>({});
     const loadingHolds = ref<Record<number, boolean>>({});
 
+    // Calcola la quantità massima modificabile in base ai limiti evento/utente
     const maxQuantityForHold = (availableQuantity: number, maxPerUser: number | null): number => {
         if (maxPerUser != null && maxPerUser > 0) {
             return Math.min(availableQuantity, maxPerUser);
@@ -24,10 +26,12 @@ export function useCartQuantityActions({
         return availableQuantity;
     };
 
+    // Indica se la quantità ha già raggiunto il limite per utente
     const hasReachedUserLimit = (quantity: number, maxPerUser: number | null): boolean => {
         return maxPerUser != null && maxPerUser > 0 && quantity >= maxPerUser;
     };
 
+    // Riduce la quantità del hold; se arriva a 1 lo elimina
     const decrementQuantity = (holdId: number, quantity: number, isExpired = false) => {
         if (loadingHolds.value[holdId] || isExpired) {
             return;
@@ -57,6 +61,7 @@ export function useCartQuantityActions({
         });
     };
 
+    // Aumenta la quantità del hold nel rispetto dei limiti disponibili
     const incrementQuantity = (
         holdId: number,
         quantity: number,

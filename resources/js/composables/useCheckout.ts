@@ -4,6 +4,7 @@ import { useCart } from '@/composables/useCart';
 import { useFormatData } from '@/composables/useFormatData';
 import type { CheckoutEventGroup, CheckoutPageErrorBag } from '@/types/models/checkout';
 
+// Composable per stato e azioni della pagina checkout
 export const useCheckout = () => {
     const page = usePage();
     const cart = useCart();
@@ -14,6 +15,7 @@ export const useCheckout = () => {
     const loadingText = ref('Conferma acquisto');
 
     const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
+    // Raggruppa le righe carrello per evento e calcola subtotali
     const itemsByEvent = computed<CheckoutEventGroup[]>(() => {
         const grouped = new Map<number, CheckoutEventGroup>();
 
@@ -46,6 +48,7 @@ export const useCheckout = () => {
 
     const totalAmountFormatted = computed(() => formatPrice(cart.totalAmount.value));
 
+    // Avvia l'invio del checkout e gestisce loading/errore
     const confirmCheckout = (): void => {
         errorMessage.value = '';
         isSubmitting.value = true;

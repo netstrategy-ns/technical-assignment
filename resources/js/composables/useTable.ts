@@ -13,6 +13,7 @@ export interface UseTableFiltersOptions {
     debounceMs?: number;
 }
 
+// Gestisce filtri tabella con debounce e sync verso payload utente
 export const useTableFilters = (
     columns: Ref<TableColumn[]>,
     filters: Ref<TableFiltersState>,
@@ -23,6 +24,7 @@ export const useTableFilters = (
     const localFilters = reactive<TableFiltersState>({});
     const filterableColumns = computed(() => columns.value.filter((column) => column.filterable));
 
+    // Allinea i filtri locali con quelli esterni, pulendo valori vuoti
     const syncFilters = (): void => {
         Object.keys(localFilters).forEach((key) => {
             delete localFilters[key];
@@ -37,6 +39,7 @@ export const useTableFilters = (
         });
     };
 
+    // Normalizza filtri e invia payload solo con valori utili
     const normalizeAndEmit = (): void => {
         const payload: TableFiltersState = {};
 
@@ -65,6 +68,7 @@ export const useTableFilters = (
 
     const emitFiltersTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
+    // Annulla eventuale timeout in sospeso per debounced emit
     const clearEmitFilterTimer = (): void => {
         if (emitFiltersTimeout.value !== null) {
             clearTimeout(emitFiltersTimeout.value);
@@ -72,6 +76,7 @@ export const useTableFilters = (
         }
     };
 
+    // Emette filtri subito o in modo debounced
     const emitFilters = (immediate = false): void => {
         clearEmitFilterTimer();
 
@@ -100,6 +105,7 @@ export const useTableFilters = (
         }, debounceMs);
     };
 
+    // Applica un valore singolo al filtro locale e pianifica emit
     const onInput = (column: TableColumn, value: unknown): void => {
         const inputType = column.input_type ?? 'text';
 
@@ -120,15 +126,18 @@ export const useTableFilters = (
         emitFilters();
     };
 
+    // Applica e invia immediatamente il filtro (use-case submit/manuale)
     const onInputAndCommit = (column: TableColumn, value: unknown): void => {
         onInput(column, value);
         commitFilters();
     };
 
+    // Forza l'emissione immediata dei filtri correnti
     const commitFilters = (): void => {
         emitFilters(true);
     };
 
+    // Resetta i filtri locali e notifica stato vuoto
     const resetFilters = (): void => {
         Object.keys(localFilters).forEach((key) => {
             delete localFilters[key];
@@ -138,6 +147,7 @@ export const useTableFilters = (
         emit({});
     };
 
+    // Verifica se una colonna è di tipo select
     const isSelectColumn = (column: TableColumn): boolean => {
         return column.input_type === 'select';
     };
@@ -171,6 +181,7 @@ const defaultPaginatedResponse: PaginatedResponse<Record<string, unknown>> = {
     links: [],
 };
 
+// Normalizza per_page in un valore consentito
 const toSafePerPage = (value: unknown): PerPageOption => {
     const candidate = value as number;
 
@@ -181,11 +192,13 @@ const toSafePerPage = (value: unknown): PerPageOption => {
     return DEFAULT_PER_PAGE;
 };
 
+// Gestisce stato, filtri, sort, paginazione e caricamento tabella
 export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
     const page = usePage();
     const baseUrl = computed(() => page.url.split('?')[0]);
 
     const tableColumns = computed(() => (Array.isArray(columns.value) ? columns.value : []));
+    // Calcola ordinamento di default dalla definizione colonne
     const tableDefaultSort = computed<TableSort>(() => {
         const defaultColumn = tableColumns.value.find(
             (column) => column.default_sort === 'asc' || column.default_sort === 'desc',
@@ -206,6 +219,7 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
     });
 
     const tablePagination = computed<PaginatedResponse<Record<string, unknown>>>(() => rows.value ?? defaultPaginatedResponse);
+    // Espone righe tabellari garantendo sempre array valido
     const tableRows = computed<Record<string, unknown>[]>(() => {
         const rowsData = tablePagination.value.data;
 
@@ -237,8 +251,10 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
         },
     );
 
+    // Converte field con punti in chiavi flat per request
     const toRequestKey = (fieldName: string): string => fieldName.replaceAll('.', '__');
 
+    // Costruisce payload completo per request (per_page, sort, filtri e override)
     const buildRequestPayload = (overrides: RequestPayload = {}): RequestPayload => {
         const normalizedFilters: RequestPayload = {};
 
@@ -270,6 +286,7 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
         };
     };
 
+    // Esegue router.get con stato corrente, reset pagina se non preservata
     const visit = (overrides: RequestPayload = {}, preservePage = false): void => {
         const payload = buildRequestPayload(overrides);
 
@@ -284,11 +301,13 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
         });
     };
 
+    // Applica aggiornamento filtri dalla toolbar e ricarica dati
     const onFiltersUpdate = (nextFilters: TableFiltersState): void => {
         tableFilters.value = nextFilters;
         visit();
     };
 
+    // Aggiorna ordinamento e gestisce ciclo speciale per default desc
     const onSortUpdate = (nextSort: TableSort): void => {
         const isDefaultColumnSort =
             tableDefaultSort.value.field !== null &&
@@ -313,6 +332,7 @@ export const useTable = ({ columns, rows, sort, filters }: UseTableOptions) => {
         visit();
     };
 
+    // Aggiorna per_page e ricarica mantenendo filtri correnti
     const onPerPageUpdate = (value: number): void => {
         perPage.value = toSafePerPage(value);
         visit();

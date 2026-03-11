@@ -1,9 +1,11 @@
 import type { UseFormatDataOptions } from '@/types/models/format';
 
+// Espone utility di formattazione prezzo, stato e date
 export const useFormatData = (options: UseFormatDataOptions = {}) => {
     const locale = options.locale ?? 'it-IT';
     const currency = options.currency ?? 'EUR';
 
+    // Formatta importi numerici come valuta con locale/currency configurati
     const formatPrice = (value: number | string): string => {
         const numericValue = typeof value === 'number' ? value : Number(value);
 
@@ -13,6 +15,7 @@ export const useFormatData = (options: UseFormatDataOptions = {}) => {
         }).format(numericValue);
     };
 
+    // Converte stati macchina in etichette leggibili
     const statusLabel = (status: string): string => {
         switch (status) {
             case 'completed':
@@ -26,6 +29,7 @@ export const useFormatData = (options: UseFormatDataOptions = {}) => {
         }
     };
 
+    // Formatta date ISO in stringa locale o placeholder se assenti
     const formatDate = (value: string | null): string => {
         if (value === null) {
             return '-';

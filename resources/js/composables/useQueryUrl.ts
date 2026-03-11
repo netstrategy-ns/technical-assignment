@@ -1,5 +1,6 @@
 import type { QueryParamValue } from '@/types/models/query';
 
+// Normalizza la base URL per evitare query e slash finali
 export const normalizeBaseUrl = (baseUrl: string, fallback = '/events'): string => {
     return (baseUrl ?? fallback).replace(/\?.*$/, '').replace(/\/$/, '') || fallback;
 };
@@ -20,6 +21,7 @@ const normalizeQueryValue = (value: QueryParamValue): string | null => {
 };
 
 // Costruisce l'URL con i parametri della query
+// Compone un URL con i parametri passati, pulendo quelli vuoti
 export const buildUrlWithQuery = (baseUrl: string, params: Record<string, QueryParamValue>, fallback = '/events'): string => {
     const base = normalizeBaseUrl(baseUrl, fallback);
     const url = new URL(base, window.location.origin);
