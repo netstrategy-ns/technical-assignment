@@ -15,7 +15,12 @@ class OrderController extends Controller
         $modelClass = Order::class;
         $resource = 'orders';
 
-        $query = Order::query()->with('user:id,name');
+        $query = Order::query()->with([
+            'user:id,name,email',
+            'orderItems.ticket.ticketType:id,event_id,name',
+            'orderItems.ticket.ticketType.event:id,title,event_category_id',
+            'orderItems.ticket.ticketType.event.category:id,name',
+        ]);
         $query = $modelClass::applyTableFilters($query, $request->query());
         $sort = $modelClass::parseTableSort($request->query());
 

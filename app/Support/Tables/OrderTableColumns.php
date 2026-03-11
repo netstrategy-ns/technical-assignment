@@ -2,6 +2,8 @@
 
 namespace App\Support\Tables;
 
+use App\Enums\OrderStatusEnum;
+
 class OrderTableColumns
 {
     public static function columns(): array
@@ -28,9 +30,9 @@ class OrderTableColumns
                 'default_sort' => null,
             ],
             [
-                'field_name' => 'user.name',
-                'label' => 'Utente',
-                'placeholder' => 'Cerca utente',
+                'field_name' => 'user.email',
+                'label' => 'Email utente',
+                'placeholder' => 'Cerca email utente',
                 'cast_type' => 'string',
                 'input_type' => 'text',
                 'filterable' => true,
@@ -38,11 +40,35 @@ class OrderTableColumns
                 'default_sort' => null,
             ],
             [
-                'field_name' => 'status',
-                'label' => 'Stato',
-                'placeholder' => 'Stato',
+                'field_name' => 'event_titles',
+                'label' => 'Eventi',
+                'placeholder' => null,
                 'cast_type' => 'string',
                 'input_type' => 'text',
+                'filterable' => false,
+                'sortable' => false,
+                'default_sort' => null,
+            ],
+            [
+                'field_name' => 'event_categories',
+                'label' => 'Categorie',
+                'placeholder' => null,
+                'cast_type' => 'string',
+                'input_type' => 'text',
+                'filterable' => false,
+                'sortable' => false,
+                'default_sort' => null,
+            ],
+            [
+                'field_name' => 'status',
+                'label' => 'Stato',
+                'placeholder' => 'Seleziona Stato',
+                'cast_type' => 'string',
+                'input_type' => 'select',
+                'options' => array_merge(
+                    [['value' => '', 'label' => 'Tutti']],
+                    OrderStatusEnum::selectOptions(),
+                ),
                 'filterable' => true,
                 'sortable' => true,
                 'default_sort' => null,
@@ -53,7 +79,7 @@ class OrderTableColumns
                 'placeholder' => 'Totale',
                 'cast_type' => 'decimal:2',
                 'input_type' => 'number',
-                'filterable' => true,
+                'filterable' => false,
                 'sortable' => true,
                 'default_sort' => null,
             ],

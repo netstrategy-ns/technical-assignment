@@ -17,7 +17,7 @@ class QueueEntryController extends Controller
 
         $query = QueueEntry::query()
             ->with('event:id,title')
-            ->with('user:id,name');
+            ->with('user:id,name,email');
         $query = $modelClass::applyTableFilters($query, $request->query());
         $sort = $modelClass::parseTableSort($request->query());
 

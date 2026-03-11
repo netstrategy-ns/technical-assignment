@@ -2,6 +2,8 @@
 
 namespace App\Support\Tables;
 
+use App\Enums\QueueEntryStatus;
+
 class QueueEntryTableColumns
 {
     public static function columns(): array
@@ -28,9 +30,9 @@ class QueueEntryTableColumns
                 'default_sort' => null,
             ],
             [
-                'field_name' => 'user.name',
-                'label' => 'Utente',
-                'placeholder' => 'Cerca utente',
+                'field_name' => 'user.email',
+                'label' => 'Email utente',
+                'placeholder' => 'Cerca email utente',
                 'cast_type' => 'string',
                 'input_type' => 'text',
                 'filterable' => true,
@@ -40,9 +42,13 @@ class QueueEntryTableColumns
             [
                 'field_name' => 'status',
                 'label' => 'Stato',
-                'placeholder' => 'Stato',
+                'placeholder' => 'Seleziona Stato',
                 'cast_type' => 'string',
-                'input_type' => 'text',
+                'input_type' => 'select',
+                'options' => array_merge(
+                    [['value' => '', 'label' => 'Tutti']],
+                    QueueEntryStatus::selectOptions(),
+                ),
                 'filterable' => true,
                 'sortable' => true,
                 'default_sort' => null,
@@ -52,17 +58,17 @@ class QueueEntryTableColumns
                 'label' => 'Entrata',
                 'placeholder' => 'Data ingresso',
                 'cast_type' => 'datetime',
-                'input_type' => 'datetime-local',
+                'input_type' => 'date',
                 'filterable' => true,
                 'sortable' => true,
                 'default_sort' => null,
             ],
             [
-                'field_name' => 'enabled_at',
-                'label' => 'Abilitato',
-                'placeholder' => 'Data abilitazione',
+                'field_name' => 'enabled_until',
+                'label' => 'Scadenza',
+                'placeholder' => 'Data scadenza',
                 'cast_type' => 'datetime',
-                'input_type' => 'datetime-local',
+                'input_type' => 'date',
                 'filterable' => true,
                 'sortable' => true,
                 'default_sort' => null,
