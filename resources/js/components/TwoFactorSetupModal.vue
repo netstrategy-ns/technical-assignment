@@ -84,6 +84,19 @@ const handleModalNextStep = () => {
     isOpen.value = false;
 };
 
+const getConfirmationError = (rawError: unknown): string => {
+    if (typeof rawError === 'string') {
+        return rawError;
+    }
+
+    if (typeof rawError === 'object' && rawError !== null && 'code' in rawError) {
+        const errorCode = (rawError as { code?: unknown }).code;
+        return typeof errorCode === 'string' ? errorCode : '';
+    }
+
+    return '';
+};
+
 const resetModalState = () => {
     if (props.twoFactorEnabled) {
         clearSetupData();
@@ -267,8 +280,9 @@ watch(
                                 </InputOTP>
                                 <InputError
                                     :message="
-                                        errors?.confirmTwoFactorAuthentication
-                                            ?.code
+                                        getConfirmationError(
+                                            errors?.confirmTwoFactorAuthentication
+                                        )
                                     "
                                 />
                             </div>

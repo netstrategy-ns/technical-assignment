@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { LayoutGrid, Package } from 'lucide-vue-next';
+import { computed } from 'vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -13,30 +14,61 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { dashboard as adminDashboard } from '@/routes/admin';
 import type { NavItem } from '@/types';
 import AppLogo from './AppLogo.vue';
-import { dashboard } from '@/routes';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const page = usePage();
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const canAccessAdmin = computed(() => {
+    const auth = page.props.auth as { canAccessAdmin?: boolean; user?: { is_admin?: boolean; isAdmin?: boolean } } | undefined;
+
+    return Boolean(auth?.canAccessAdmin ?? auth?.user?.is_admin ?? auth?.user?.isAdmin);
+});
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: adminDashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (canAccessAdmin.value) {
+        items.push(
+            {
+                title: 'Eventi',
+                href: '/admin/events',
+                icon: Package,
+            },
+            {
+                title: 'Categorie eventi',
+                href: '/admin/event-categories',
+                icon: Package,
+            },
+            {
+                title: 'Biglietti',
+                href: '/admin/tickets',
+                icon: Package,
+            },
+            {
+                title: 'Ordini',
+                href: '/admin/orders',
+                icon: Package,
+            },
+            {
+                title: 'Coda eventi',
+                href: '/admin/queue-entries',
+                icon: Package,
+            },
+        );
+    }
+
+    return items;
+});
+
+const footerNavItems: NavItem[] = [];
 </script>
 
 <template>
@@ -45,7 +77,7 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+                        <Link :href="adminDashboard()">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
