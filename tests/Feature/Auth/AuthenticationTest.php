@@ -29,7 +29,35 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
+    }
+
+    public function test_users_can_authenticate_to_requested_redirect_path()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+            'auth_redirect' => '/orders',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect('/orders');
+    }
+
+    public function test_users_auth_redirect_invalid_or_external_path_is_sanitized()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+            'auth_redirect' => 'https://evil.com/phish',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('home', absolute: false));
     }
 
     public function test_users_with_two_factor_enabled_are_redirected_to_two_factor_challenge()

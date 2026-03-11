@@ -11,12 +11,20 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
 
 defineProps<{
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
 }>();
+
+const { get, storeCurrent } = useAuthRedirect();
+const authRedirect = get('login');
+
+const setRegisterRedirect = (): void => {
+    storeCurrent('register');
+};
 </script>
 
 <template>
@@ -40,6 +48,7 @@ defineProps<{
             class="flex flex-col gap-6"
         >
             <div class="grid gap-6">
+                <input type="hidden" name="auth_redirect" :value="authRedirect ?? ''" />
                 <div class="grid gap-2">
                     <Label for="email">Email address</Label>
                     <Input
@@ -103,7 +112,7 @@ defineProps<{
                 v-if="canRegister"
             >
                 Don't have an account?
-                <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+                <TextLink :href="register()" :tabindex="5" @click="setRegisterRedirect">Sign up</TextLink>
             </div>
         </Form>
     </AuthBase>

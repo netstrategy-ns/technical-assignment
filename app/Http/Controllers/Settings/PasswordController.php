@@ -15,7 +15,11 @@ class PasswordController extends Controller
      */
     public function edit(): Response
     {
-        return Inertia::render('settings/Password');
+        $component = request()->user()?->isAdmin()
+            ? 'admin/profile/Profile'
+            : 'app/user/Profile';
+
+        return Inertia::render($component);
     }
 
     /**

@@ -1,0 +1,243 @@
+import { router, usePage } from '@inertiajs/vue3';
+import { useDebounceFn } from '@vueuse/core';
+import type { Ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import {
+    buildUrlWithQuery,
+    getNumericQueryParam,
+    normalizeBaseUrl,
+} from '@/composables/useQueryUrl';
+import {
+    DEFAULT_PER_PAGE,
+    DEFAULT_SORT,
+    EVENT_SORT_OPTIONS,
+    PER_PAGE_OPTIONS,
+} from '@/constants';
+import type {
+    EventSortValue,
+    BuildEventsIndexUrlOptions,
+    EventFiltersState,
+    UseEventFiltersPanelOptions,
+    UseEventFiltersPanelReturn,
+} from '@/types/models/event';
+
+const defaultBaseUrl = '/events';
+
+// ------------------------------------------------------------
+// Types e Interfaces
+// ------------------------------------------------------------
+
+
+ 
+export { DEFAULT_SORT, EVENT_SORT_OPTIONS };
+export type {
+    EventSortValue,
+    BuildEventsIndexUrlOptions,
+    EventFiltersState,
+    UseEventFiltersPanelOptions,
+    UseEventFiltersPanelReturn,
+} from '@/types/models/event';
+
+// ------------------------------------------------------------
+// Funzioni
+// ------------------------------------------------------------
+
+// Mantiene lo stesso formato dell'URL quando si applicano i filtri
+export const buildEventsIndexUrl = (
+    baseUrl: string = defaultBaseUrl,
+    filters: EventFiltersState = { featured: false },
+    options: BuildEventsIndexUrlOptions = {},
+): string => {
+    const base = normalizeBaseUrl(baseUrl ?? defaultBaseUrl);
+    const sortVal = filters.sort?.trim();
+
+    return buildUrlWithQuery(
+        base,
+        {
+            featured: filters.featured,
+            category: filters.category,
+            search: filters.search,
+            location: filters.location,
+            start_date: filters.start_date,
+            end_date: filters.end_date,
+            available_tickets: filters.available_tickets,
+            sort: sortVal && sortVal !== DEFAULT_SORT ? sortVal : undefined,
+            page: options.resetPage !== false ? 1 : undefined,
+            per_page: options.perPage,
+        },
+        defaultBaseUrl,
+    );
+};
+
+
+// Mappa i filtri ricevuti dal server nel formato usato dal client
+export const filtersStateFromPayload = (payload: Record<string, unknown>): EventFiltersState => {
+    const sortRaw = payload.sort != null ? String(payload.sort) : null;
+    const sort = sortRaw && ['date_asc', 'date_desc', 'featured_first'].includes(sortRaw) ? sortRaw : DEFAULT_SORT;
+    return {
+        featured: Boolean(payload.featured),
+        category: payload.category != null ? String(payload.category) : null,
+        search: payload.search != null ? String(payload.search) : null,
+        location: payload.location != null ? String(payload.location) : null,
+        start_date: payload.start_date != null ? String(payload.start_date) : null,
+        end_date: payload.end_date != null ? String(payload.end_date) : null,
+        available_tickets: Boolean(payload.available_tickets),
+        sort,
+    };
+};
+
+// Wrapper semplice per costruzione URL con base custom
+export const useEventFilters = (eventsIndexUrl: string = defaultBaseUrl) => {
+    return {
+        buildEventsIndexUrl: (filters: EventFiltersState, options?: BuildEventsIndexUrlOptions) =>
+            buildEventsIndexUrl(eventsIndexUrl, filters, options),
+        filtersStateFromPayload,
+    };
+};
+
+
+// Gestisce stato filtri, applicazione e reset dei filtri eventi
+export const useEventFiltersPanel = (
+    baseUrl: string,
+    filtersFromServer: Ref<EventFiltersState>,
+    options: UseEventFiltersPanelOptions = {},
+): UseEventFiltersPanelReturn => {
+    const { preserveState = true, debounceMs = 400, searchInputRef } = options;
+    const page = usePage();
+
+    const search = ref(filtersFromServer.value.search ?? '');
+    const category = ref(filtersFromServer.value.category ?? '');
+    const start_date = ref(filtersFromServer.value.start_date ?? '');
+    const end_date = ref(filtersFromServer.value.end_date ?? '');
+    const location = ref(filtersFromServer.value.location ?? '');
+    const featured = ref(filtersFromServer.value.featured ?? false);
+    const availableTickets = ref(filtersFromServer.value.available_tickets ?? false);
+    const sort = ref(filtersFromServer.value.sort ?? DEFAULT_SORT);
+
+    // Recupera l'elemento input della ricerca per focus/blur
+    const getSearchInputElement = (): HTMLInputElement | null =>
+        searchInputRef?.value?.$el ?? null;
+
+    // Verifica se il campo ricerca è attualmente focusato
+    const isSearchInputFocused = (): boolean => {
+        const input = getSearchInputElement();
+
+        return input != null && typeof document !== 'undefined' && document.activeElement === input;
+    };
+
+    watch(
+        filtersFromServer,
+        (f) => {
+            if (!isSearchInputFocused()) {
+                search.value = f.search ?? '';
+            }
+            category.value = f.category ?? '';
+            start_date.value = f.start_date ?? '';
+            end_date.value = f.end_date ?? '';
+            location.value = f.location ?? '';
+            featured.value = f.featured ?? false;
+            availableTickets.value = f.available_tickets ?? false;
+            sort.value = (f.sort as EventSortValue) ?? DEFAULT_SORT;
+        },
+        { deep: true },
+    );
+
+    // Legge il valore per_page corrente dai query params, validandolo
+    const currentPerPage = computed(() => {
+        const n = getNumericQueryParam(page.url, 'per_page', DEFAULT_PER_PAGE);
+        return PER_PAGE_OPTIONS.includes(n as (typeof PER_PAGE_OPTIONS)[number]) ? n : DEFAULT_PER_PAGE;
+    });
+
+    // Costruisce il payload filtro corrente dal model UI
+    const buildQuery = (): EventFiltersState => ({
+        featured: featured.value,
+        category: category.value?.trim() || undefined,
+        search: search.value ?? undefined,
+        location: location.value ?? undefined,
+        start_date: start_date.value || undefined,
+        end_date: end_date.value || undefined,
+        available_tickets: availableTickets.value,
+        sort: sort.value || DEFAULT_SORT,
+    });
+
+    // Applica i filtri aggiornando URL e resettando pagina
+    const applyFilters = () => {
+        const url = buildEventsIndexUrl(baseUrl, buildQuery(), {
+            resetPage: true,
+            perPage: currentPerPage.value,
+        });
+        router.visit(url, { preserveState, replace: true, preserveScroll: true });
+    };
+
+    // Applica filtri preservando il focus sull'input di ricerca
+    const applyFiltersWithPreservedFocus = () => {
+        const url = buildEventsIndexUrl(baseUrl, buildQuery(), {
+            resetPage: true,
+            perPage: currentPerPage.value,
+        });
+        router.visit(url, {
+            preserveState,
+            replace: true,
+            preserveScroll: true,
+            onFinish: () => {
+                nextTick(() => searchInputRef?.value?.$el?.focus());
+            },
+        });
+    };
+
+    // Applica i filtri con debounce (opzionale focus-preserve)
+    const applyFiltersDebounced = useDebounceFn(
+        searchInputRef ? applyFiltersWithPreservedFocus : applyFilters,
+        debounceMs,
+    );
+
+    // Resetta tutti i filtri ai valori di default
+    const resetFilters = () => {
+        search.value = '';
+        category.value = '';
+        start_date.value = '';
+        end_date.value = '';
+        location.value = '';
+        availableTickets.value = false;
+        featured.value = false;
+        sort.value = DEFAULT_SORT;
+        const url = buildEventsIndexUrl(
+            baseUrl,
+            { featured: false, available_tickets: false, sort: DEFAULT_SORT },
+            { perPage: currentPerPage.value },
+        );
+        router.visit(url, { preserveState, replace: true, preserveScroll: true });
+    };
+
+    // Indica se almeno un filtro ha un valore diverso dal default
+    const hasActiveFilters = computed(() => {
+        const q = buildQuery();
+        return (
+            q.featured === true ||
+            (q.category != null && q.category !== '') ||
+            (q.search != null && q.search.trim() !== '') ||
+            (q.location != null && q.location.trim() !== '') ||
+            (q.start_date != null && q.start_date !== '') ||
+            (q.end_date != null && q.end_date !== '') ||
+            q.available_tickets === true ||
+            (q.sort != null && q.sort !== DEFAULT_SORT)
+        );
+    });
+
+    return {
+        search,
+        category,
+        start_date,
+        end_date,
+        location,
+        availableTickets,
+        featured,
+        sort,
+        currentPerPage,
+        applyFilters,
+        applyFiltersDebounced,
+        resetFilters,
+        hasActiveFilters,
+        buildQuery,
+    };
+};

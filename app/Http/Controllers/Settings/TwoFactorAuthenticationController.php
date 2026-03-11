@@ -29,7 +29,11 @@ class TwoFactorAuthenticationController extends Controller implements HasMiddlew
     {
         $request->ensureStateIsValid();
 
-        return Inertia::render('settings/TwoFactor', [
+        $component = $request->user()->isAdmin()
+            ? 'admin/profile/Profile'
+            : 'settings/TwoFactor';
+
+        return Inertia::render($component, [
             'twoFactorEnabled' => $request->user()->hasEnabledTwoFactorAuthentication(),
             'requiresConfirmation' => Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm'),
         ]);

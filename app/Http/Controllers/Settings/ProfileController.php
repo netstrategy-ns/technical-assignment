@@ -19,7 +19,11 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/Profile', [
+        $component = $request->user()?->isAdmin()
+            ? 'admin/profile/Profile'
+            : 'app/user/Profile';
+
+        return Inertia::render($component, [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);
@@ -38,7 +42,10 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return to_route('profile.edit');
+        return to_route($request->user()->isAdmin()
+            ? 'admin.user.settings.profile'
+            : 'profile.edit'
+        );
     }
 
     /**
@@ -50,7 +57,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->delete();
+        $user->forceDelete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

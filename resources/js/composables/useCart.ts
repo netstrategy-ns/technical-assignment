@@ -1,0 +1,256 @@
+import { router, usePage } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted } from 'vue';
+import type { CartActionOptions, CartItem, CartPayload } from '@/types/models/cart';
+
+let cartAutoRefreshIntervalId: number | null = null;
+let cartAutoRefreshConsumers = 0;
+let cartExpirationSyncIntervalId: number | null = null;
+let cartExpirationSyncConsumers = 0;
+let cartExpiredRefreshPending = false;
+let cartExpirationSyncResetTimeoutId: number | null = null;
+let cartHoldExpiredListenerCount = 0;
+export const CART_HOLD_EXPIRED_EVENT = 'tickme:cart-hold-expired';
+
+// Invia l'evento custom quando un hold del carrello scade
+function emitCartHoldExpiredEvent(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.dispatchEvent(new Event(CART_HOLD_EXPIRED_EVENT));
+}
+
+// Aggiorna la pagina corrente via Inertia preservando stato e scroll
+function refreshCurrentPage(options: CartActionOptions = {}): void {
+    router.visit(window.location.href, {
+        preserveScroll: true,
+        preserveState: true,
+        replace: true,
+        onSuccess: options.onSuccess,
+        onError: options.onError,
+        onFinish: options.onFinish,
+    });
+}
+
+// Verifica se tra gli item del carrello ce ne sono già scaduti
+function cartHasExpiredItemsFromItems(items: CartItem[]): boolean {
+    const now = Date.now();
+
+    return items.some((item) => {
+        if (!item.expires_at) {
+            return false;
+        }
+
+        const expiresAt = Date.parse(item.expires_at);
+        if (!Number.isFinite(expiresAt)) {
+            return false;
+        }
+
+        return expiresAt <= now;
+    });
+}
+
+const emptyCart: CartPayload = {
+    items: [],
+    summary: {
+        total_items: 0,
+        total_amount: 0,
+    },
+};
+
+// Espone stato e azioni principali per leggere e modificare il carrello
+export function useCart() {
+    const page = usePage();
+
+    const urls = computed(() => (page.props.urls as Record<string, string>) ?? {});
+    const cart = computed(() => (page.props.cart as CartPayload | null) ?? emptyCart);
+    const items = computed(() => cart.value.items ?? []);
+    const totalItems = computed(() => cart.value.summary?.total_items ?? 0);
+    const totalAmount = computed(() => cart.value.summary?.total_amount ?? 0);
+    const isEmpty = computed(() => items.value.length === 0);
+
+    // Cerca e restituisce l'item corrente per ID ticket
+    const getItemByTicketId = (ticketId: number): CartItem | undefined =>
+        items.value.find((item) => item.ticket.id === ticketId);
+
+    // Legge la quantità attuale per un ticket specifico
+    const quantityForTicket = (ticketId: number): number =>
+        getItemByTicketId(ticketId)?.quantity ?? 0;
+
+    // Aggiunge un hold al carrello
+    const add = (ticketId: number, quantity = 1, options: CartActionOptions = {}): void => {
+        router.post(
+            urls.value.cartHoldsStore ?? '/cart/hold',
+            {
+                ticket_id: ticketId,
+                quantity,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onSuccess: options.onSuccess,
+                onError: options.onError,
+                onFinish: options.onFinish,
+            },
+        );
+    };
+
+    // Rimuove un hold dal carrello
+    const remove = (holdId: number, options: CartActionOptions = {}): void => {
+        router.delete(`${urls.value.cartHoldsBase ?? '/cart/hold'}/${holdId}`, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+            onSuccess: options.onSuccess,
+            onError: options.onError,
+            onFinish: options.onFinish,
+        });
+    };
+
+    // Aggiorna la quantità di un hold esistente
+    const update = (holdId: number, quantity: number, options: CartActionOptions = {}): void => {
+        router.patch(
+            `${urls.value.cartHoldsUpdateBase ?? '/cart/hold'}/${holdId}`,
+            { quantity },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onSuccess: options.onSuccess,
+                onError: options.onError,
+                onFinish: options.onFinish,
+            },
+        );
+    };
+
+    // Forza il refresh della pagina corrente senza cambiare pagina
+    const refresh = (options: CartActionOptions = {}): void => {
+        refreshCurrentPage(options);
+    };
+
+    return {
+        cart,
+        items,
+        totalItems,
+        totalAmount,
+        isEmpty,
+        add,
+        remove,
+        update,
+        refresh,
+        getItemByTicketId,
+        quantityForTicket,
+    };
+}
+
+// Avvia un refresh periodico del carrello (attivo in pagina)
+export function useCartAutoRefresh(intervalMs = 90_000) {
+    onMounted(() => {
+        cartAutoRefreshConsumers += 1;
+
+        if (cartAutoRefreshIntervalId !== null) {
+            return;
+        }
+
+        cartAutoRefreshIntervalId = window.setInterval(() => {
+            if (document.visibilityState === 'hidden') {
+                return;
+            }
+
+            refreshCurrentPage();
+        }, intervalMs);
+    });
+
+    onUnmounted(() => {
+        cartAutoRefreshConsumers = Math.max(0, cartAutoRefreshConsumers - 1);
+
+        if (cartAutoRefreshConsumers > 0 || cartAutoRefreshIntervalId === null) {
+            return;
+        }
+
+        window.clearInterval(cartAutoRefreshIntervalId);
+        cartAutoRefreshIntervalId = null;
+    });
+}
+
+// Controlla periodicamente le scadenze degli hold e notifica se necessario
+export function useCartExpirationAutoRefresh(checkIntervalMs = 1_000) {
+    const page = usePage();
+    const cart = computed(() => (page.props.cart as CartPayload | null) ?? emptyCart);
+
+    onMounted(() => {
+        cartExpirationSyncConsumers += 1;
+
+        if (cartExpirationSyncIntervalId !== null) {
+            return;
+        }
+
+        cartExpirationSyncIntervalId = window.setInterval(() => {
+            if (document.visibilityState === 'hidden') {
+                return;
+            }
+
+            const hasExpiredItems = cartHasExpiredItemsFromItems(cart.value.items);
+            if (!hasExpiredItems) {
+                cartExpiredRefreshPending = false;
+
+                return;
+            }
+
+            if (!cartExpiredRefreshPending) {
+                cartExpiredRefreshPending = true;
+                emitCartHoldExpiredEvent();
+                if (cartExpirationSyncResetTimeoutId !== null) {
+                    window.clearTimeout(cartExpirationSyncResetTimeoutId);
+                }
+                cartExpirationSyncResetTimeoutId = window.setTimeout(() => {
+                    cartExpiredRefreshPending = false;
+                    cartExpirationSyncResetTimeoutId = null;
+                }, checkIntervalMs);
+            }
+        }, checkIntervalMs);
+    });
+
+    onUnmounted(() => {
+        cartExpirationSyncConsumers = Math.max(0, cartExpirationSyncConsumers - 1);
+
+        if (cartExpirationSyncConsumers > 0 || cartExpirationSyncIntervalId === null) {
+            return;
+        }
+
+        window.clearInterval(cartExpirationSyncIntervalId);
+        cartExpirationSyncIntervalId = null;
+        cartExpiredRefreshPending = false;
+    });
+}
+
+// Registra un listener globale per l'evento di hold scaduto
+export function useCartHoldExpiredEvent(handler: () => void): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const listener = (): void => {
+        handler();
+    };
+
+    onMounted(() => {
+        cartHoldExpiredListenerCount += 1;
+        window.addEventListener(CART_HOLD_EXPIRED_EVENT, listener);
+    });
+
+    onUnmounted(() => {
+        cartHoldExpiredListenerCount = Math.max(0, cartHoldExpiredListenerCount - 1);
+        window.removeEventListener(CART_HOLD_EXPIRED_EVENT, listener);
+
+        if (cartHoldExpiredListenerCount > 0 || cartExpirationSyncConsumers > 0) {
+            return;
+        }
+
+        if (cartExpirationSyncResetTimeoutId !== null) {
+            window.clearTimeout(cartExpirationSyncResetTimeoutId);
+            cartExpirationSyncResetTimeoutId = null;
+        }
+    });
+}

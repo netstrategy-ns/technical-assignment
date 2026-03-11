@@ -9,6 +9,14 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+import { useAuthRedirect } from '@/composables/useAuthRedirect';
+
+const { get, storeCurrent } = useAuthRedirect();
+const authRedirect = get('register');
+
+const setLoginRedirect = (): void => {
+    storeCurrent('login');
+};
 </script>
 
 <template>
@@ -25,6 +33,7 @@ import { store } from '@/routes/register';
             class="flex flex-col gap-6"
         >
             <div class="grid gap-6">
+                <input type="hidden" name="auth_redirect" :value="authRedirect ?? ''" />
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
                     <Input
@@ -100,6 +109,7 @@ import { store } from '@/routes/register';
                     :href="login()"
                     class="underline underline-offset-4"
                     :tabindex="6"
+                    @click="setLoginRedirect"
                     >Log in</TextLink
                 >
             </div>
