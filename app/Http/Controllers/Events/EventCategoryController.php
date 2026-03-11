@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Events;
 
-use App\Http\Requests\StoreEventCategoryRequest;
-use App\Http\Requests\UpdateEventCategoryRequest;
+use App\Http\Requests\Events\StoreEventCategoryRequest;
+use App\Http\Requests\Events\UpdateEventCategoryRequest;
 use App\Models\EventCategory;
-
+use App\Http\Controllers\Controller;
 class EventCategoryController extends Controller
 {
     /**

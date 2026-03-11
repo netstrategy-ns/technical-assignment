@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $canAccessAdmin = $user?->isAdmin() ?? false;
+        $sharedUser = $user === null ? null : (new UserResource($user))->toArray($request);
 
         $publicUrls = [
             'eventsIndex' => Route::has('events.index') ? route('events.index') : '/events',
@@ -98,7 +99,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'canRegister' => Features::enabled(Features::registration()),
             'auth' => [
-                'user' => $user === null ? null : new UserResource($user),
+                'user' => $sharedUser,
                 'canAccessAdmin' => $canAccessAdmin,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
