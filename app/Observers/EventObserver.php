@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 
 class EventObserver
 {
+    // Genera/aggiorna lo slug dell'evento quando cambiano title o starts_at
     public function saving(Event $event): void
     {
         if (empty($event->title) || $event->starts_at === null) {

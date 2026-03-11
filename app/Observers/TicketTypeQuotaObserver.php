@@ -6,13 +6,13 @@ use App\Models\TicketTypeQuota;
 
 class TicketTypeQuotaObserver
 {
-    // Valida la somma dei bigliettti dispobili per tipo evitando di superare il totale disponibile per evento 
+    // Valida che la somma delle quote per tipo evento non superi il totale disponibile
     public function saving(TicketTypeQuota $allocation): void
     {
         $allocation->loadMissing('ticketType.event');
         $event = $allocation->ticketType?->event;
 
-        // Controllo se l'evento esiste e se la disponibilità è maggiore di 0
+        // Esce se l'evento non esiste o non ha slot disponibili
         if (! $event || (int) $event->available_tickets <= 0) {
             return;
         }
