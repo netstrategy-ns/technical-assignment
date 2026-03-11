@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\EventController;
+use App\Http\Controllers\Events\EventController;
 use App\Http\Controllers\Checkout\CartController;
 use App\Http\Controllers\Checkout\CheckoutController;
 use App\Http\Controllers\Events\EventQueueController;
@@ -27,8 +27,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
-Route::middleware(['auth', 'verified', 'admin'])->get('/dashboard', function (): \Illuminate\Http\RedirectResponse {
-    return redirect()->route('admin.dashboard');
-})->name('dashboard');
 
 require __DIR__.'/settings.php';

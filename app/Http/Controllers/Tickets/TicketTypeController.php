@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Tickets;
 
-use App\Http\Requests\StoreTicketTypeRequest;
-use App\Http\Requests\UpdateTicketTypeRequest;
+use App\Http\Requests\Tickets\StoreTicketTypeRequest;
+use App\Http\Requests\Tickets\UpdateTicketTypeRequest;
 use App\Models\TicketType;
-
+use App\Http\Controllers\Controller;
 class TicketTypeController extends Controller
 {
     /**

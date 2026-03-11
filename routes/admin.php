@@ -1,6 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\EventCategoryController;
+use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderItemController;
+use App\Http\Controllers\Admin\QueueEntryController;
+use App\Http\Controllers\Admin\TicketController;
+use App\Http\Controllers\Admin\TicketTypeController;
+use App\Http\Controllers\Admin\TicketTypeQuotaController;
+use App\Http\Controllers\Admin\VenueTypeController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -18,6 +27,15 @@ Route::middleware(['web', 'auth', 'verified', 'admin'])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/dashboard', [AdminDashboardController::class, '__invoke'])->name('dashboard');
+        Route::get('/events', [EventController::class, 'index'])->name('events.index');
+        Route::get('/event-categories', [EventCategoryController::class, 'index'])->name('event-categories.index');
+        Route::get('/venue-types', [VenueTypeController::class, 'index'])->name('venue-types.index');
+        Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+        Route::get('/ticket-types', [TicketTypeController::class, 'index'])->name('ticket-types.index');
+        Route::get('/ticket-type-quotas', [TicketTypeQuotaController::class, 'index'])->name('ticket-type-quotas.index');
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/order-items', [OrderItemController::class, 'index'])->name('order-items.index');
+        Route::get('/queue-entries', [QueueEntryController::class, 'index'])->name('queue-entries.index');
 
         Route::get('/user/settings/profile', [ProfileController::class, 'edit'])->name('user.settings.profile');
         Route::patch('/user/settings/profile', [ProfileController::class, 'update'])->name('user.settings.profile.update');
